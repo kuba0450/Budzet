@@ -15,15 +15,22 @@
 <title>Mój Budżet</title>
 <style>
 :root{
-  --bg:#f4f5fb; --card:#ffffff; --card2:#f8f9fd; --text:#0f172a; --muted:#64748b; --line:#e5e8f0;
-  --c-full:#6366f1; --c-free:#10b981; --c-plan:#f59e0b; --c-save:#0ea5e9; --c-exp:#f43f5e;
+  --bg:#f4f5fb; --card:#ffffff; --card2:#f1f3f9; --text:#0f172a; --muted:#64748b; --line:#e5e8f0;
+  --c-full:#6366f1; --c-free:#10b981; --c-plan:#f59e0b; --c-save:#0ea5e9; --c-exp:#f43f5e; --c-cash:#16a34a;
+  /* kolory kategorii (stała kolejność) */
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --s0:#94a3b8; --sx:#cbd5e1;
+  --bar-on:#2a78d6; --bar-off:#b7d3f6;
   --shadow:0 1px 2px rgba(15,23,42,.04),0 6px 20px rgba(15,23,42,.06);
   --radius:20px;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0b1020; --card:#151b2e; --card2:#1b2238; --text:#e8ecf5; --muted:#8b95ab; --line:#252d45;
+    --bg:#0b1020; --card:#151b2e; --card2:#1d2439; --text:#e8ecf5; --muted:#8b95ab; --line:#252d45;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#0ca30c; --s7:#9085e9; --s8:#e66767;
+    --s0:#64748b; --sx:#3b465e;
+    --bar-on:#3987e5; --bar-off:#1c3d6b;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
     color-scheme:dark;
   }
@@ -31,16 +38,18 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text)}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
-  min-height:100vh;padding-bottom:calc(90px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+  min-height:100vh;padding-bottom:calc(96px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
-input{font:inherit;color:inherit}
+input,select{font:inherit;color:inherit}
 .wrap{max-width:560px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 16px}
 
 /* header */
-.top{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 18px}
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 18px;gap:10px}
 .top h1{font-size:26px;margin:0;letter-spacing:-.02em}
 .top p{margin:2px 0 0;color:var(--muted);font-size:14px}
-.iconbtn{width:42px;height:42px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px}
+.iconbtn{width:42px;height:42px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;font-size:19px;flex:0 0 auto}
+.pill{padding:10px 14px;border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-weight:650;font-size:14px;flex:0 0 auto}
+.pill.pri{background:var(--c-plan);color:#fff}
 
 /* tiles */
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -61,11 +70,20 @@ input{font:inherit;color:inherit}
 .tile.big .ic{background:rgba(255,255,255,.18)}
 .tile .neg{color:var(--c-exp)}
 .tile.big .neg{color:#ffd1da}
-.seg-bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.2);margin-top:4px}
+.seg-bar{display:flex;gap:2px;height:8px;border-radius:99px;overflow:hidden;background:rgba(255,255,255,.2);margin-top:4px}
 .seg-bar span{display:block;height:100%}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.9)}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
 .tile .hint{position:absolute;right:14px;bottom:14px;font-size:18px;opacity:.35}
+
+.cash{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;background:var(--card);border-radius:var(--radius);
+  padding:14px 16px;box-shadow:var(--shadow);text-align:left;border:1.5px dashed color-mix(in srgb,var(--c-cash) 45%,transparent)}
+.cash:active{transform:scale(.98)}
+.cash .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:color-mix(in srgb,var(--c-cash) 15%,transparent)}
+.cash .t{flex:1}
+.cash .t b{display:block;font-size:14px}
+.cash .t small{color:var(--muted);font-size:12px}
+.cash .v{font-size:19px;font-weight:750}
 
 /* sections */
 .sec{margin-top:24px}
@@ -73,36 +91,94 @@ input{font:inherit;color:inherit}
 .sec-h h2{font-size:17px;margin:0}
 .sec-h button{color:var(--c-full);font-weight:600;font-size:14px}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:6px}
-.goals-scroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.goals-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 8px}
 .goals-scroll::-webkit-scrollbar{display:none}
-.goal-chip{flex:0 0 auto;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px;min-width:130px;text-align:left}
+.goal-chip{flex:0 0 auto;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px;width:150px;text-align:left}
 .goal-chip .e{font-size:24px}
-.goal-chip b{display:block;font-size:14px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.goal-chip span{font-size:13px;color:var(--c-plan);font-weight:700}
+.goal-chip b{display:block;font-size:14px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.goal-chip small{font-size:12px;color:var(--muted)}
+.prog{height:7px;border-radius:9px;background:var(--card2);overflow:hidden;margin-top:8px}
+.prog span{display:block;height:100%;border-radius:9px;background:var(--c-plan);transition:width .4s}
+.prog.done span{background:var(--c-free)}
 
 /* rows */
 .row{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border-radius:14px;text-align:left}
-.row:active{background:var(--card2)}
+button.row:active{background:var(--card2)}
 .ri{width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;font-size:20px;
   background:color-mix(in srgb,var(--c) 14%,transparent)}
 .rt{flex:1;min-width:0}
 .rt b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rt small{color:var(--muted);font-size:12.5px}
 .ra{font-weight:700;font-size:15px;white-space:nowrap}
-.ra.pos{color:var(--c-free)} .ra.neg{color:var(--c-exp)} .ra.save{color:var(--c-save)} .ra.mut{color:var(--muted)}
+.ra.pos{color:var(--c-free)} .ra.neg{color:var(--c-exp)} .ra.save{color:var(--c-save)} .ra.mut{color:var(--muted)} .ra.plan{color:var(--c-plan)}
 .empty{text-align:center;color:var(--muted);padding:26px 16px;font-size:14px}
 .empty .e{font-size:34px;display:block;margin-bottom:6px}
 
+/* goals view */
+.gsum{background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.gsum small{opacity:.9;font-weight:600;font-size:13px}
+.gsum .v{font-size:30px;font-weight:750;letter-spacing:-.02em;margin:2px 0}
+.gsum .v span{font-size:16px;opacity:.85;font-weight:600}
+.gsum .prog{background:rgba(255,255,255,.25)} .gsum .prog span{background:#fff}
+.gsum p{margin:10px 0 0;font-size:13px;opacity:.95}
+.gcard{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-top:12px}
+.gcard .gh{display:flex;align-items:center;gap:12px}
+.gcard .ge{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;font-size:25px;background:color-mix(in srgb,var(--c-plan) 15%,transparent)}
+.gcard .gt{flex:1;min-width:0}
+.gcard .gt b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcard .gt small{color:var(--muted);font-size:13px}
+.gcard .pct{font-weight:750;font-size:17px}
+.gcard .prog{height:10px;margin-top:14px}
+.gcard .gi{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px}
+.gcard .gb{display:flex;gap:8px;margin-top:14px}
+.gcard .gb button{flex:1;padding:11px;border-radius:13px;font-weight:650;font-size:14px;background:var(--card2)}
+.gcard .gb .dep{background:var(--c-plan);color:#fff}
+.gcard.done .ge{background:color-mix(in srgb,var(--c-free) 15%,transparent)}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--c-free) 16%,transparent);color:var(--c-free)}
+
+/* analysis */
+.donut-wrap{display:flex;flex-direction:column;align-items:center;padding:18px 10px 8px}
+.donut{width:220px;height:220px;position:relative}
+.donut svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.donut circle.seg{fill:none;stroke-width:26;transition:stroke-width .15s,opacity .15s;cursor:pointer}
+.donut circle.seg.dim{opacity:.3}
+.donut circle.seg.hl{stroke-width:32}
+.donut .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:0 46px}
+.donut .ctr small{color:var(--muted);font-size:12.5px;font-weight:600;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.donut .ctr b{font-size:21px;letter-spacing:-.02em}
+.donut .ctr span{color:var(--muted);font-size:12px}
+.crow{display:flex;align-items:center;gap:10px;width:100%;padding:11px 10px;border-radius:14px;text-align:left}
+.crow:active{background:var(--card2)}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+.crow .e{font-size:20px;width:26px;text-align:center}
+.crow .n{flex:1;min-width:0}
+.crow .n b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .n small{color:var(--muted);font-size:12px}
+.crow .v{text-align:right}
+.crow .v b{display:block;font-size:14.5px}
+.crow .v small{color:var(--muted);font-size:12px}
+.crow .track{height:5px;border-radius:9px;background:var(--card2);margin-top:6px;overflow:hidden}
+.crow .track span{display:block;height:100%;border-radius:4px}
+.bars6{display:flex;align-items:flex-end;gap:8px;height:150px;padding:28px 6px 0}
+.bars6 button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;position:relative}
+.bars6 .b{width:100%;max-width:34px;border-radius:4px 4px 0 0;background:var(--bar-off);min-height:2px}
+.bars6 button.on .b{background:var(--bar-on)}
+.bars6 .ml{font-size:11.5px;color:var(--muted);font-weight:600}
+.bars6 button.on .ml{color:var(--text)}
+.bars6 .bv{position:absolute;font-size:11.5px;font-weight:700;white-space:nowrap;color:var(--text)}
+.baseline{height:1px;background:var(--line);margin:0 6px}
+.note{color:var(--muted);font-size:12.5px;margin:12px 4px 0;line-height:1.45}
+
 /* nav */
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 16px calc(8px + env(safe-area-inset-bottom));
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
   background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-top:1px solid var(--line)}
 .nav-in{max-width:560px;margin:0 auto;display:flex;align-items:center;justify-content:space-around}
-.nav-b{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);padding:4px 18px}
-.nav-b svg{width:24px;height:24px}
+.nav-b{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0}
+.nav-b svg{width:23px;height:23px}
 .nav-b.on{color:var(--c-full)}
-.fab{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;
-  font-size:30px;line-height:1;box-shadow:0 8px 20px rgba(244,63,94,.4);margin-top:-26px;display:grid;place-items:center}
+.fab{flex:0 0 56px;width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;
+  font-size:30px;line-height:1;box-shadow:0 8px 20px rgba(244,63,94,.4);margin:-26px 6px 0;display:grid;place-items:center}
 .fab:active{transform:scale(.94)}
 
 /* sheet */
@@ -113,14 +189,14 @@ input{font:inherit;color:inherit}
   transform:translateY(105%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s;max-width:560px;margin:0 auto}
 .sheet.on{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
 .grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
-.sh-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.sh-h h3{margin:0;font-size:20px}
-.x{width:34px;height:34px;border-radius:50%;background:var(--card);font-size:16px;color:var(--muted)}
+.sh-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:10px}
+.sh-h h3{margin:0;font-size:20px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x{width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:var(--card);font-size:16px;color:var(--muted)}
 .bal{background:var(--card);border-radius:18px;padding:14px 16px;margin:10px 0 16px;box-shadow:var(--shadow);border-left:5px solid var(--c)}
 .bal small{color:var(--muted);font-weight:600;font-size:13px}
 .bal div{font-size:28px;font-weight:750;letter-spacing:-.02em}
 .bal p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
-label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 2px 6px}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:14px 2px 6px}
 .in{width:100%;padding:14px 15px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);font-size:16px;outline:none}
 .in:focus{border-color:var(--c,var(--c-full))}
 .in.amt{font-size:24px;font-weight:700}
@@ -130,18 +206,26 @@ label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:1
 .btn:active{filter:brightness(.92)}
 .btn.ghost{background:var(--card);color:var(--c-exp);box-shadow:var(--shadow)}
 .btn.sec2{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.btn+.btn{margin-top:10px}
 .err{color:var(--c-exp);font-size:13px;margin:8px 2px 0;min-height:1em}
 .seg{display:flex;background:var(--card);border-radius:14px;padding:4px;gap:4px;box-shadow:var(--shadow)}
-.seg button{flex:1;padding:10px 6px;border-radius:11px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button{flex:1;padding:10px 4px;border-radius:11px;font-weight:600;font-size:13.5px;color:var(--muted)}
 .seg button.on{background:var(--c);color:#fff}
 .emojis{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
 .emojis button{aspect-ratio:1;border-radius:12px;font-size:21px;background:var(--card);display:grid;place-items:center}
 .emojis button.on{background:color-mix(in srgb,var(--c) 22%,var(--card));outline:2px solid var(--c)}
+.cats{display:flex;gap:8px;flex-wrap:wrap}
+.cats button{padding:9px 13px;border-radius:99px;background:var(--card);font-weight:600;font-size:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:6px}
+.cats button .dot{width:8px;height:8px;flex-basis:8px}
+.cats button.on{outline:2px solid var(--c);background:color-mix(in srgb,var(--c) 14%,var(--card))}
+.cats button.add{color:var(--c-full);box-shadow:none;border:1.5px dashed var(--line)}
 .quick{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .quick button{padding:8px 14px;border-radius:99px;background:var(--card);font-weight:600;font-size:13.5px;box-shadow:var(--shadow)}
 .list-h{font-size:13px;font-weight:700;color:var(--muted);margin:22px 4px 6px;text-transform:uppercase;letter-spacing:.04em}
-.goal-row .acts{display:flex;gap:6px}
-.goal-row .acts button{width:36px;height:36px;border-radius:11px;background:var(--card2);font-size:16px}
+.acts{display:flex;gap:6px}
+.acts button{width:36px;height:36px;border-radius:11px;background:var(--card2);font-size:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.grid2 .btn{margin-top:0}
 
 /* history */
 .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 4px}
@@ -157,17 +241,10 @@ label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:1
 .sum div{background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);border-top:4px solid var(--c)}
 .sum small{display:block;color:var(--muted);font-size:12.5px;font-weight:600}
 .sum b{font-size:18px;letter-spacing:-.01em}
-.bars .bar{padding:10px 10px 8px}
-.bar-top{display:flex;align-items:center;gap:10px;font-size:14.5px}
-.bar-top .e{font-size:20px}
-.bar-top .n{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar-top .n small{font-weight:500;color:var(--muted)}
-.bar-top .v{font-weight:700}
-.track{height:7px;border-radius:9px;background:var(--card2);margin:7px 0 0 30px;overflow:hidden}
-.track span{display:block;height:100%;border-radius:9px;background:var(--c)}
+.sum em{font-style:normal;font-size:12px;font-weight:600;color:var(--muted)}
 .day{font-size:13px;font-weight:700;color:var(--muted);margin:18px 6px 6px}
 
-.toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:60;
+.toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translate(-50%,20px);z-index:60;
   background:var(--text);color:var(--bg);padding:11px 18px;border-radius:14px;font-weight:600;font-size:14px;opacity:0;
   transition:.25s;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -189,7 +266,15 @@ label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:1
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>
       Pulpit
     </button>
+    <button class="nav-b" data-view="goals">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+      Cele
+    </button>
     <button class="fab" id="fab" aria-label="Dodaj wydatek">+</button>
+    <button class="nav-b" data-view="stats">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>
+      Analiza
+    </button>
     <button class="nav-b" data-view="hist">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
       Historia
@@ -204,18 +289,35 @@ label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:1
 
 <script>
 "use strict";
-/* ========== STAN I ZAPIS ========== */
+/* =====================================================================
+   STAN I ZAPIS
+   ===================================================================== */
 const KEY = 'budzet-v1';
+const DEFAULT_CATS = [
+  ['🛒','Jedzenie i zakupy'], ['🚗','Transport'], ['🏠','Dom i rachunki'],
+  ['🎮','Rozrywka'], ['💊','Zdrowie'], ['👕','Ubrania'],
+];
 let S = load();
 let view = 'dash';
-const H = { cat: 'all', month: monthKey(new Date()) };
+const H = { cat: 'all', month: monthKey(new Date()) };   // historia
+const A = { month: monthKey(new Date()), hl: null };     // analiza
 
+function fresh(){
+  return { v:2, tx:[], goals:[], cats: DEFAULT_CATS.map(([e,n],i) => ({ id: uid(), name:n, emoji:e, slot:i })) };
+}
+function migrate(d){
+  if(!d || !Array.isArray(d.tx) || !Array.isArray(d.goals)) return null;
+  // v1 -> v2: cele miały tylko "amount" (cała kwota zarezerwowana)
+  d.goals = d.goals.map(g => g.target === undefined
+    ? { id:g.id, name:g.name, emoji:g.emoji, target:g.amount, saved:g.amount, created:g.created }
+    : g);
+  if(!Array.isArray(d.cats)) d.cats = fresh().cats;
+  d.v = 2;
+  return d;
+}
 function load(){
-  try{
-    const d = JSON.parse(localStorage.getItem(KEY));
-    if(d && Array.isArray(d.tx) && Array.isArray(d.goals)) return d;
-  }catch(e){}
-  return { tx: [], goals: [] };
+  try{ const d = migrate(JSON.parse(localStorage.getItem(KEY))); if(d) return d; }catch(e){}
+  return fresh();
 }
 function persist(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }
@@ -223,27 +325,27 @@ function persist(){
   render();
 }
 
-/* ========== POMOCNICZE ========== */
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+/* =====================================================================
+   POMOCNICZE
+   ===================================================================== */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 const r2 = n => Math.round(n*100)/100;
 const PLN = new Intl.NumberFormat('pl-PL',{style:'currency',currency:'PLN'});
 const fmt = n => PLN.format(r2(n) || 0);
+const fmt0 = n => new Intl.NumberFormat('pl-PL',{maximumFractionDigits:0}).format(n) + ' zł';
 function parseAmt(v){ const n = parseFloat(String(v).replace(/\s/g,'').replace(',','.')); return isFinite(n) ? r2(n) : NaN; }
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-function monthLabel(k){
-  const [y,m] = k.split('-').map(Number);
-  const s = new Intl.DateTimeFormat('pl-PL',{month:'long',year:'numeric'}).format(new Date(y,m-1,1));
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function monthLabel(k){ const [y,m] = k.split('-').map(Number); return cap(new Intl.DateTimeFormat('pl-PL',{month:'long',year:'numeric'}).format(new Date(y,m-1,1))); }
+function monthShort(k){ const [y,m] = k.split('-').map(Number); return new Intl.DateTimeFormat('pl-PL',{month:'short'}).format(new Date(y,m-1,1)).replace('.',''); }
 function shiftMonth(k, d){ const [y,m] = k.split('-').map(Number); return monthKey(new Date(y, m-1+d, 1)); }
 const dShort = iso => new Intl.DateTimeFormat('pl-PL',{day:'numeric',month:'short'}).format(new Date(iso));
 function dayLabel(iso){
   const d = new Date(iso), t = new Date(); const y = new Date(); y.setDate(t.getDate()-1);
   if(d.toDateString() === t.toDateString()) return 'Dzisiaj';
   if(d.toDateString() === y.toDateString()) return 'Wczoraj';
-  const s = new Intl.DateTimeFormat('pl-PL',{weekday:'long',day:'numeric',month:'long'}).format(d);
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return cap(new Intl.DateTimeFormat('pl-PL',{weekday:'long',day:'numeric',month:'long'}).format(d));
 }
 function todayInput(){ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function dateFromInput(v){
@@ -252,10 +354,24 @@ function dateFromInput(v){
   return new Date(y, m-1, d, n.getHours(), n.getMinutes(), n.getSeconds()).toISOString();
 }
 function addTx(t){ S.tx.push({ id: uid(), date: new Date().toISOString(), ...t }); }
+function plural(n, one, few, many){
+  if(n === 1) return one;
+  const d = n % 10, dd = n % 100;
+  return (d >= 2 && d <= 4 && !(dd >= 12 && dd <= 14)) ? few : many;
+}
+const sorted = arr => [...arr].sort((a,b) => new Date(b.date) - new Date(a.date));
+const inMonth = (t, mk) => mk === 'all' || monthKey(new Date(t.date)) === mk;
 
-/* ========== OBLICZENIA ========== */
+/* kategorie */
+const catById = id => S.cats.find(c => c.id === id) || null;
+const catColor = c => c && c.slot !== null && c.slot !== undefined ? `var(--s${c.slot+1})` : (c ? 'var(--sx)' : 'var(--s0)');
+function freeSlot(){ for(let i=0;i<8;i++) if(!S.cats.some(c => c.slot === i)) return i; return null; }
+
+/* =====================================================================
+   OBLICZENIA
+   ===================================================================== */
 function totals(){
-  let inc=0, exp=0, sv=0, wd=0, un=0, expMonth=0;
+  let inc=0, exp=0, sv=0, wd=0, un=0, expMonth=0, cash=0;
   const mk = monthKey(new Date());
   for(const t of S.tx){
     switch(t.type){
@@ -264,30 +380,42 @@ function totals(){
       case 'save': sv += t.amount; break;
       case 'withdraw': wd += t.amount; break;
       case 'unsave': un += t.amount; break;
+      case 'cash_in': case 'cash_adj': cash += t.amount; break;
+      case 'cash_out': cash -= t.amount; break;
     }
   }
   const full = r2(inc - exp - wd);
   const savings = r2(sv - wd - un);
-  const planned = r2(S.goals.reduce((a,g) => a + g.amount, 0));
-  return { full, savings, planned, free: r2(full - planned - savings), exp: r2(exp), expMonth: r2(expMonth) };
+  const planned = r2(S.goals.reduce((a,g) => a + g.saved, 0));
+  const target = r2(S.goals.reduce((a,g) => a + g.target, 0));
+  return { full, savings, planned, target, free: r2(full - planned - savings), expMonth: r2(expMonth), cash: r2(cash) };
 }
 
-/* ========== METADANE OPERACJI ========== */
-const CAT = {
-  income:  { c:'var(--c-full)', types:['income','adjust'] },
-  expense: { c:'var(--c-exp)',  types:['expense'] },
-  savings: { c:'var(--c-save)', types:['save','withdraw','unsave'] },
-  goals:   { c:'var(--c-plan)', types:['goal'] },
+/* =====================================================================
+   OPIS OPERACJI
+   ===================================================================== */
+const CATS_H = {
+  expense: ['expense'], income: ['income','adjust'], savings: ['save','withdraw','unsave'],
+  goals: ['goal','goal_dep','goal_wd'], cash: ['cash_in','cash_out','cash_adj'],
 };
 function meta(t){
   switch(t.type){
     case 'income':  return { e:'💰', c:'var(--c-full)', title: t.name || 'Wpływ', sub:'Wpływ', amt:'+'+fmt(t.amount), cls:'pos' };
     case 'adjust':  return { e:'⚖️', c:'var(--c-full)', title:'Korekta salda', sub:'Ustawienie kwoty', amt:(t.amount>=0?'+':'−')+fmt(Math.abs(t.amount)), cls:t.amount>=0?'pos':'neg' };
-    case 'expense': return { e: t.emoji || '💸', c:'var(--c-exp)', title: t.name || 'Wydatek', sub: t.fromGoal ? 'Wydatek · zrealizowany cel' : 'Wydatek', amt:'−'+fmt(t.amount), cls:'neg' };
+    case 'expense': {
+      const c = catById(t.catId);
+      return { e: t.emoji || '💸', c:'var(--c-exp)', title: t.name || 'Wydatek',
+        sub: (c ? c.name : 'Bez kategorii') + (t.fromGoal ? ' · cel' : ''), amt:'−'+fmt(t.amount), cls:'neg' };
+    }
     case 'save':    return { e:'🐷', c:'var(--c-save)', title:'Odłożono na oszczędności', sub:'Oszczędności', amt:'+'+fmt(t.amount), cls:'save' };
-    case 'withdraw':return { e:'💸', c:'var(--c-save)', title: t.name || 'Wykorzystano z oszczędności', sub:'Wykorzystano z oszczędności', amt:'−'+fmt(t.amount), cls:'neg' };
+    case 'withdraw':return { e:'💸', c:'var(--c-save)', title: t.name || 'Wykorzystano z oszczędności', sub:'Z oszczędności', amt:'−'+fmt(t.amount), cls:'neg' };
     case 'unsave':  return { e:'↩️', c:'var(--c-save)', title:'Przywrócono do wolnych środków', sub:'Oszczędności', amt:fmt(t.amount), cls:'mut' };
+    case 'goal_dep':return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub:'Wpłata na cel', amt:'+'+fmt(t.amount), cls:'plan' };
+    case 'goal_wd': return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub:'Wycofano z celu', amt:'−'+fmt(t.amount), cls:'mut' };
     case 'goal':    return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub: {add:'Nowy cel', done:'Cel zrealizowany ✓', del:'Cel usunięty'}[t.action] || 'Cel', amt:fmt(t.amount), cls:'mut' };
+    case 'cash_in': return { e:'💵', c:'var(--c-cash)', title: t.name || 'Dodano gotówkę', sub:'Gotówka', amt:'+'+fmt(t.amount), cls:'pos' };
+    case 'cash_out':return { e: t.emoji || '💵', c:'var(--c-cash)', title: t.name || 'Wydatek gotówką', sub:'Gotówka', amt:'−'+fmt(t.amount), cls:'neg' };
+    case 'cash_adj':return { e:'⚖️', c:'var(--c-cash)', title:'Korekta gotówki', sub:'Gotówka', amt:(t.amount>=0?'+':'−')+fmt(Math.abs(t.amount)), cls:t.amount>=0?'pos':'neg' };
   }
   return { e:'•', c:'var(--muted)', title:'?', sub:'', amt:'', cls:'mut' };
 }
@@ -298,14 +426,16 @@ function txRow(t, showDate=true){
     <span class="rt"><b>${esc(m.title)}</b><small>${esc(m.sub)}${showDate ? ' · '+dShort(t.date) : ''}</small></span>
     <span class="ra ${m.cls}">${m.amt}</span></button>`;
 }
-const sorted = arr => [...arr].sort((a,b) => new Date(b.date) - new Date(a.date));
 
-/* ========== RENDER ========== */
+/* =====================================================================
+   RENDER
+   ===================================================================== */
 const $app = document.getElementById('app');
 function render(){
   document.querySelectorAll('.nav-b').forEach(b => b.classList.toggle('on', b.dataset.view === view));
-  view === 'dash' ? renderDash() : renderHist();
+  ({ dash:renderDash, goals:renderGoals, stats:renderStats, hist:renderHist })[view]();
 }
+function go(v){ view = v; render(); scrollTo(0,0); }
 
 function tile(key, c, ic, label, val, sub=''){
   return `<button class="tile" data-open="${key}" style="--c:${c}">
@@ -313,13 +443,14 @@ function tile(key, c, ic, label, val, sub=''){
     <span class="am ${val<0?'neg':''}">${fmt(val)}</span>${sub ? `<span class="sub">${sub}</span>` : ''}
     <span class="hint">›</span></button>`;
 }
+const pctOf = (a,b) => b > 0 ? Math.max(0, Math.min(100, a/b*100)) : 0;
 
+/* ---------- PULPIT ---------- */
 function renderDash(){
   const T = totals();
   const base = Math.max(T.full, 0.0001);
-  const pct = v => Math.max(0, Math.min(100, v / base * 100));
   const hello = (() => { const h = new Date().getHours(); return h < 5 ? 'Dobranoc' : h < 12 ? 'Dzień dobry' : h < 18 ? 'Cześć' : 'Dobry wieczór'; })();
-  const recent = sorted(S.tx).slice(0, 6);
+  const recent = sorted(S.tx.filter(t => t.type !== 'goal')).slice(0, 6);
 
   $app.innerHTML = `
   <header class="top">
@@ -332,23 +463,32 @@ function renderDash(){
       <span style="display:flex;align-items:center;gap:10px"><span class="ic">💼</span><span class="lb">Pełne środki</span></span>
       <span class="am ${T.full<0?'neg':''}">${fmt(T.full)}</span>
       <span class="seg-bar">
-        <span style="width:${pct(T.free)}%;background:#6ee7b7"></span>
-        <span style="width:${pct(T.planned)}%;background:#fcd34d"></span>
-        <span style="width:${pct(T.savings)}%;background:#7dd3fc"></span>
+        ${T.free > 0 ? `<span style="width:${pctOf(T.free,base)}%;background:#6ee7b7"></span>` : ''}
+        ${T.planned > 0 ? `<span style="width:${pctOf(T.planned,base)}%;background:#fcd34d"></span>` : ''}
+        ${T.savings > 0 ? `<span style="width:${pctOf(T.savings,base)}%;background:#7dd3fc"></span>` : ''}
       </span>
-      <span class="legend"><span><i style="background:#6ee7b7"></i>Wolne</span><span><i style="background:#fcd34d"></i>Zaplanowane</span><span><i style="background:#7dd3fc"></i>Oszczędności</span></span>
+      <span class="legend"><span><i style="background:#6ee7b7"></i>Wolne</span><span><i style="background:#fcd34d"></i>Cele</span><span><i style="background:#7dd3fc"></i>Oszczędności</span></span>
     </button>
     ${tile('free','var(--c-free)','✨','Wolne środki',T.free,'do wydania')}
-    ${tile('plan','var(--c-plan)','🎯','Zaplanowane',T.planned, S.goals.length ? S.goals.length + ' ' + plural(S.goals.length,'cel','cele','celów') : 'brak celów')}
+    ${tile('plan','var(--c-plan)','🎯','Zaplanowane',T.planned, S.goals.length ? 'na ' + S.goals.length + ' ' + plural(S.goals.length,'cel','cele','celów') : 'brak celów')}
     ${tile('save','var(--c-save)','🐷','Oszczędności',T.savings,'odłożone')}
     ${tile('exp','var(--c-exp)','🧾','Wydatki',T.expMonth,'w tym miesiącu')}
   </section>
 
+  <button class="cash" data-open="cash">
+    <span class="ic">💵</span>
+    <span class="t"><b>Gotówka</b><small>poza budżetem i statystykami</small></span>
+    <span class="v" style="${T.cash<0?'color:var(--c-exp)':''}">${fmt(T.cash)}</span>
+  </button>
+
   ${S.goals.length ? `
   <section class="sec">
-    <div class="sec-h"><h2>Twoje cele</h2><button data-open="plan">Zarządzaj</button></div>
+    <div class="sec-h"><h2>Twoje cele</h2><button data-goto="goals">Wszystkie ›</button></div>
     <div class="goals-scroll">
-      ${S.goals.map(g => `<button class="goal-chip" data-open="plan"><span class="e">${esc(g.emoji)}</span><b>${esc(g.name)}</b><span>${fmt(g.amount)}</span></button>`).join('')}
+      ${S.goals.map(g => { const p = pctOf(g.saved, g.target); return `
+        <button class="goal-chip" data-goal="${g.id}"><span class="e">${esc(g.emoji)}</span><b>${esc(g.name)}</b>
+        <small>${fmt0(g.saved)} z ${fmt0(g.target)}</small>
+        <div class="prog ${p>=100?'done':''}"><span style="width:${p}%"></span></div></button>`; }).join('')}
     </div>
   </section>` : ''}
 
@@ -360,59 +500,146 @@ function renderDash(){
     </div>
   </section>`;
 }
-function plural(n, one, few, many){
-  if(n === 1) return one;
-  const d = n % 10, dd = n % 100;
-  return (d >= 2 && d <= 4 && !(dd >= 12 && dd <= 14)) ? few : many;
+
+/* ---------- CELE ---------- */
+function renderGoals(){
+  const T = totals();
+  const p = pctOf(T.planned, T.target);
+  $app.innerHTML = `
+    <header class="top"><div><p>Odkładaj krok po kroku</p><h1>Cele</h1></div>
+      <button class="pill pri" data-open="newgoal">＋ Nowy cel</button></header>
+    ${S.goals.length ? `
+      <div class="gsum">
+        <small>Odłożono na cele</small>
+        <div class="v">${fmt(T.planned)} <span>z ${fmt(T.target)}</span></div>
+        <div class="prog"><span style="width:${p}%"></span></div>
+        <p>✨ Wolne środki do wpłaty: <b>${fmt(T.free)}</b></p>
+      </div>
+      ${S.goals.map(goalCard).join('')}`
+    : `<div class="card"><div class="empty"><span class="e">🎯</span>Nie masz jeszcze celów.<br>Dodaj pierwszy — np. wakacje albo nowy telefon.
+        <button class="btn" style="--c:var(--c-plan)" data-open="newgoal">＋ Dodaj cel</button></div></div>`}`;
+}
+function goalCard(g){
+  const p = pctOf(g.saved, g.target), done = g.saved >= g.target;
+  const left = r2(g.target - g.saved);
+  return `<div class="gcard ${done?'done':''}">
+    <div class="gh"><span class="ge">${esc(g.emoji)}</span>
+      <span class="gt"><b>${esc(g.name)}</b><small>${fmt(g.saved)} z ${fmt(g.target)}</small></span>
+      <span class="pct" style="color:${done?'var(--c-free)':'var(--c-plan)'}">${Math.floor(p)}%</span></div>
+    <div class="prog ${done?'done':''}"><span style="width:${p}%"></span></div>
+    <div class="gi"><span>${done ? '<span class="badge">🎉 Cel osiągnięty!</span>' : 'Brakuje: <b>' + fmt(left) + '</b>'}</span><span>od ${dShort(g.created)}</span></div>
+    <div class="gb"><button class="dep" data-dep="${g.id}">＋ Wpłać</button><button data-goal="${g.id}">Więcej ⋯</button></div>
+  </div>`;
 }
 
+/* ---------- ANALIZA ---------- */
+function expByCat(mk){
+  const map = new Map();
+  let total = 0, n = 0;
+  for(const t of S.tx){
+    if(t.type !== 'expense' || !inMonth(t, mk)) continue;
+    const c = catById(t.catId); const k = c ? c.id : 'none';
+    const g = map.get(k) || { key:k, cat:c, v:0, n:0 };
+    g.v += t.amount; g.n++; map.set(k, g); total += t.amount; n++;
+  }
+  return { groups: [...map.values()].sort((a,b) => b.v - a.v), total: r2(total), n };
+}
+function renderStats(){
+  const mk = A.month, cur = monthKey(new Date());
+  const { groups, total, n } = expByCat(mk);
+  const prev = expByCat(shiftMonth(mk, -1)).total;
+  const [y,m] = mk.split('-').map(Number);
+  const days = mk === cur ? new Date().getDate() : new Date(y, m, 0).getDate();
+  const diff = prev > 0 ? Math.round((total - prev) / prev * 100) : null;
+
+  // segmenty wykresu: kategorie z kolorem osobno, reszta → "Inne"
+  const segs = []; let other = null;
+  for(const g of groups){
+    if(g.cat && (g.cat.slot === null || g.cat.slot === undefined)){
+      other = other || { key:'other', label:'Inne', emoji:'📦', color:'var(--sx)', v:0, n:0 };
+      other.v += g.v; other.n += g.n;
+    } else segs.push({ key:g.key, label: g.cat ? g.cat.name : 'Bez kategorii', emoji: g.cat ? g.cat.emoji : '💸', color: catColor(g.cat), v:g.v, n:g.n });
+  }
+  if(other) segs.push(other);
+
+  // 6 miesięcy
+  const months = []; for(let i=5;i>=0;i--){ const k = shiftMonth(mk, -i); months.push({ k, v: expByCat(k).total }); }
+  const maxM = Math.max(...months.map(x => x.v), 1);
+
+  $app.innerHTML = `
+    <header class="top"><div><p>Na co idą pieniądze</p><h1>Analiza</h1></div>
+      <button class="pill" data-open="cats">🏷️ Kategorie</button></header>
+    <div class="month">
+      <button data-am="-1" aria-label="Poprzedni miesiąc">‹</button>
+      <b>${monthLabel(mk)}</b>
+      <button data-am="1" ${mk>=cur?'disabled':''} aria-label="Następny miesiąc">›</button>
+    </div>
+    <div class="sum">
+      <div style="--c:var(--c-exp)"><small>Wydano</small><b>${fmt(total)}</b></div>
+      <div style="--c:var(--c-exp)"><small>vs poprzedni miesiąc</small><b>${diff === null ? '—' : (diff > 0 ? '▲ +' : diff < 0 ? '▼ ' : '') + diff + '%'}</b>
+        <em>${prev > 0 ? fmt(prev) : 'brak danych'}</em></div>
+      <div style="--c:var(--c-full)"><small>Średnio dziennie</small><b>${fmt(total / days)}</b></div>
+      <div style="--c:var(--c-full)"><small>Liczba wydatków</small><b>${n}</b></div>
+    </div>
+
+    ${total > 0 ? `
+    <div class="list-h">Wydatki wg kategorii</div>
+    <div class="card">
+      <div class="donut-wrap">${donut(segs, total)}</div>
+      ${segs.map(s => `<button class="crow" data-catx="${s.key}">
+          <span class="dot" style="background:${s.color}"></span><span class="e">${esc(s.emoji)}</span>
+          <span class="n"><b>${esc(s.label)}</b><small>${s.n} ${plural(s.n,'wydatek','wydatki','wydatków')}</small>
+            <div class="track"><span style="width:${s.v/segs[0].v*100}%;background:${s.color}"></span></div></span>
+          <span class="v"><b>${fmt(s.v)}</b><small>${(s.v/total*100).toFixed(s.v/total < .1 ? 1 : 0).replace('.',',')}%</small></span>
+        </button>`).join('')}
+    </div>` : `<div class="card" style="margin-top:16px"><div class="empty"><span class="e">📊</span>Brak wydatków w tym miesiącu.</div></div>`}
+
+    <div class="list-h">Ostatnie 6 miesięcy</div>
+    <div class="card">
+      <div class="bars6">${months.map(x => `<button class="${x.k===mk?'on':''}" data-amk="${x.k}" aria-label="${monthLabel(x.k)}: ${fmt(x.v)}">
+          ${x.k===mk ? `<span class="bv" style="bottom:calc(${x.v/maxM*100}% * .78 + 30px)">${fmt0(x.v)}</span>` : ''}
+          <span class="b" style="height:calc(${x.v/maxM*100}% * .78)"></span><span class="ml">${monthShort(x.k)}</span></button>`).join('')}</div>
+    </div>
+    <p class="note">💵 Gotówka nie jest wliczana do analizy. Stuknij kategorię, aby zobaczyć jej wydatki, albo słupek, aby przejść do miesiąca.</p>`;
+}
+function donut(segs, total){
+  const R = 80, C = 2 * Math.PI * R, GAP = segs.length > 1 ? 3 : 0;
+  let off = 0;
+  const circles = segs.map(s => {
+    const len = s.v / total * C;
+    const vis = Math.max(len - GAP, 0.5);
+    const el = `<circle class="seg ${A.hl && A.hl!==s.key?'dim':''} ${A.hl===s.key?'hl':''}" data-hl="${s.key}" cx="100" cy="100" r="${R}"
+      stroke="${s.color}" stroke-dasharray="${vis} ${C - vis}" stroke-dashoffset="${-off}"><title>${esc(s.label)}: ${fmt(s.v)}</title></circle>`;
+    off += len; return el;
+  }).join('');
+  const h = segs.find(s => s.key === A.hl);
+  return `<div class="donut"><svg viewBox="0 0 200 200" role="img" aria-label="Wykres wydatków według kategorii">${circles}</svg>
+    <div class="ctr">${h
+      ? `<small>${esc(h.emoji)} ${esc(h.label)}</small><b>${fmt(h.v)}</b><span>${Math.round(h.v/total*100)}% wydatków</span>`
+      : `<small>Wydano</small><b>${fmt(total)}</b><span>stuknij wycinek</span>`}</div></div>`;
+}
+
+/* ---------- HISTORIA ---------- */
 function renderHist(){
-  const inMonth = t => H.month === 'all' || monthKey(new Date(t.date)) === H.month;
-  const all = S.tx.filter(inMonth);
-  const list = sorted(H.cat === 'all' ? all : all.filter(t => CAT[H.cat].types.includes(t.type)));
-  const sum = (types, arr=all) => r2(arr.filter(t => types.includes(t.type)).reduce((a,t) => a + t.amount, 0));
+  const all = S.tx.filter(t => inMonth(t, H.month));
+  const list = sorted(H.cat === 'all' ? all : all.filter(t => CATS_H[H.cat].includes(t.type)));
+  const sum = types => r2(all.filter(t => types.includes(t.type)).reduce((a,t) => a + t.amount, 0));
   const cur = monthKey(new Date());
 
   let summary = '';
-  if(H.cat === 'all'){
-    summary = sumGrid([
-      ['Wpływy', sum(['income']) + sum(['adjust']), 'var(--c-full)'],
-      ['Wydatki', sum(['expense']), 'var(--c-exp)'],
-      ['Odłożono', sum(['save']), 'var(--c-save)'],
-      ['Z oszczędności', sum(['withdraw']), 'var(--c-plan)'],
-    ]);
-  } else if(H.cat === 'expense'){
-    const exps = all.filter(t => t.type === 'expense');
-    const total = sum(['expense']);
-    const groups = {};
-    for(const t of exps){
-      const k = t.emoji || '💸';
-      const g = groups[k] ||= { e:k, v:0, n:0, names:{} };
-      g.v += t.amount; g.n++; const nm = (t.name||'').trim(); if(nm) g.names[nm] = (g.names[nm]||0) + 1;
-    }
-    const arr = Object.values(groups).sort((a,b) => b.v - a.v);
-    summary = sumGrid([['Wydano łącznie', total, 'var(--c-exp)'], ['Liczba wydatków', exps.length, 'var(--c-exp)', true]]) +
-      (arr.length ? `<div class="list-h">Na co wydajesz</div><div class="card bars" style="--c:var(--c-exp)">` +
-        arr.map(g => {
-          const names = Object.entries(g.names).sort((a,b) => b[1]-a[1]).map(x => x[0]);
-          const label = names.slice(0,2).join(', ') + (names.length > 2 ? '…' : '') || 'Inne';
-          return `<div class="bar"><div class="bar-top"><span class="e">${esc(g.e)}</span>
-            <span class="n">${esc(label)} <small>· ${g.n}×</small></span><span class="v">${fmt(g.v)}</span></div>
-            <div class="track"><span style="width:${total ? g.v/total*100 : 0}%"></span></div>
-            <div style="margin:3px 0 0 30px;font-size:12px;color:var(--muted)">${total ? Math.round(g.v/total*100) : 0}% wydatków</div></div>`;
-        }).join('') + `</div>` : '');
-  } else if(H.cat === 'income'){
-    summary = sumGrid([['Wpływy', sum(['income']), 'var(--c-full)'], ['Korekty salda', sum(['adjust']), 'var(--c-full)']]);
-  } else if(H.cat === 'savings'){
-    const s = sum(['save']), w = sum(['withdraw']), u = sum(['unsave']);
-    summary = sumGrid([['Odłożono', s, 'var(--c-save)'], ['Wykorzystano', w, 'var(--c-exp)'], ['Przywrócono', u, 'var(--muted)'], ['Bilans', r2(s-w-u), 'var(--c-free)']]);
-  } else if(H.cat === 'goals'){
-    const g = all.filter(t => t.type === 'goal');
-    const s = a => r2(g.filter(t => t.action === a).reduce((x,t) => x + t.amount, 0));
-    summary = sumGrid([['Dodane cele', s('add'), 'var(--c-plan)'], ['Zrealizowane', s('done'), 'var(--c-free)']]);
-  }
+  if(H.cat === 'all') summary = sumGrid([
+    ['Wpływy', sum(['income','adjust']), 'var(--c-full)'], ['Wydatki', sum(['expense']), 'var(--c-exp)'],
+    ['Odłożono', sum(['save']), 'var(--c-save)'], ['Wpłaty na cele', sum(['goal_dep']), 'var(--c-plan)']]);
+  else if(H.cat === 'expense') summary = sumGrid([['Wydano łącznie', sum(['expense']), 'var(--c-exp)'],
+    ['Liczba wydatków', all.filter(t => t.type === 'expense').length, 'var(--c-exp)', true]]) +
+    `<button class="btn sec2" data-goto="stats">📊 Zobacz analizę wg kategorii</button>`;
+  else if(H.cat === 'income') summary = sumGrid([['Wpływy', sum(['income']), 'var(--c-full)'], ['Korekty salda', sum(['adjust']), 'var(--c-full)']]);
+  else if(H.cat === 'savings'){ const s = sum(['save']), w = sum(['withdraw']), u = sum(['unsave']);
+    summary = sumGrid([['Odłożono', s, 'var(--c-save)'], ['Wykorzystano', w, 'var(--c-exp)'], ['Przywrócono', u, 'var(--s0)'], ['Bilans', r2(s-w-u), 'var(--c-free)']]); }
+  else if(H.cat === 'goals'){ const done = r2(all.filter(t => t.type==='goal' && t.action==='done').reduce((a,t)=>a+t.amount,0));
+    summary = sumGrid([['Wpłacono', sum(['goal_dep']), 'var(--c-plan)'], ['Wycofano', sum(['goal_wd']), 'var(--s0)'], ['Zrealizowano', done, 'var(--c-free)']]); }
+  else if(H.cat === 'cash') summary = sumGrid([['Dodano gotówki', sum(['cash_in']), 'var(--c-cash)'], ['Wydano gotówką', sum(['cash_out']), 'var(--c-exp)']]);
 
-  // grupowanie po dniach
   let days = '', lastDay = '';
   for(const t of list){
     const dk = new Date(t.date).toDateString();
@@ -421,10 +648,10 @@ function renderHist(){
   }
   if(lastDay) days += '</div>';
 
-  const chips = [['all','Wszystko'],['expense','🧾 Wydatki'],['income','💰 Wpływy'],['savings','🐷 Oszczędności'],['goals','🎯 Cele']];
+  const chips = [['all','Wszystko'],['expense','🧾 Wydatki'],['income','💰 Wpływy'],['savings','🐷 Oszczędności'],['goals','🎯 Cele'],['cash','💵 Gotówka']];
   $app.innerHTML = `
     <header class="top"><div><p>Twoje finanse</p><h1>Historia</h1></div></header>
-    <div class="chips">${chips.map(([k,l]) => `<button class="chip ${H.cat===k?'on':''}" data-cat="${k}">${l}</button>`).join('')}</div>
+    <div class="chips">${chips.map(([k,l]) => `<button class="chip ${H.cat===k?'on':''}" data-hcat="${k}">${l}</button>`).join('')}</div>
     <div class="month">
       <button data-m="-1" ${H.month==='all'?'disabled':''} aria-label="Poprzedni miesiąc">‹</button>
       <b>${H.month==='all' ? 'Cały okres' : monthLabel(H.month)}</b>
@@ -441,7 +668,9 @@ function sumGrid(items){
   return `<div class="sum">${items.map(([l,v,c,raw]) => `<div style="--c:${c}"><small>${l}</small><b>${raw ? v : fmt(v)}</b></div>`).join('')}</div>`;
 }
 
-/* ========== ARKUSZE (OKNA) ========== */
+/* =====================================================================
+   OKNA (ARKUSZE)
+   ===================================================================== */
 const $ov = document.getElementById('ov'), $sh = document.getElementById('sheet');
 function openSheet(html, color='var(--c-full)'){
   $sh.style.setProperty('--c', color);
@@ -456,20 +685,43 @@ const head = t => `<div class="sh-h"><h3>${t}</h3><button class="x" data-close a
 const bal = (label, v, note='') => `<div class="bal"><small>${label}</small><div style="${v<0?'color:var(--c-exp)':''}">${fmt(v)}</div>${note?`<p>${note}</p>`:''}</div>`;
 const amtField = (name='amount', label='Kwota') => `<label class="f">${label}</label>
   <div class="amtwrap"><input class="in amt" name="${name}" inputmode="decimal" placeholder="0,00" autocomplete="off"><span>zł</span></div>`;
+const $ = s => $sh.querySelector(s);
 
-const EXP_EMOJI = ['🛒','🍔','☕','🍕','🚗','⛽','🚌','🏠','💡','📱','🎮','🎬','👕','💊','🎁','✈️','🐶','📚','💇','🍺','🏋️','💳','🧾','🔧'];
+const EXP_EMOJI = ['💸','🛒','🍔','☕','🍕','🚗','⛽','🚌','🏠','💡','📱','🎮','🎬','👕','💊','🎁','✈️','🐶','📚','💇','🍺','🏋️','💳','🔧'];
 const GOAL_EMOJI = ['🎯','✈️','🏖️','🚗','🏠','💻','📱','🎁','💍','🎓','🛋️','🚲','🎸','⌚','🎄','🏥'];
-function emojiPicker(list){
+const CAT_EMOJI = ['🛒','🍔','🚗','🏠','💡','🎮','💊','👕','📱','🎁','✈️','🐶','📚','💇','🍺','🏋️','👶','🎓','💼','🔧','🧾','🎬','☕','💳'];
+
+function emojiPicker(list, sel){
+  sel = sel || list[0];
   return `<label class="f">Ikona</label><div class="emojis" data-picker>
-    ${list.map((e,i) => `<button type="button" class="${i===0?'on':''}" data-emoji="${e}">${e}</button>`).join('')}
-  </div><input type="hidden" name="emoji" value="${list[0]}">`;
+    ${list.map(e => `<button type="button" class="${e===sel?'on':''}" data-emoji="${e}">${e}</button>`).join('')}
+  </div><input type="hidden" name="emoji" value="${esc(sel)}">`;
 }
-function bindPicker(form){
+function bindPicker(form, onPick){
   const p = form.querySelector('[data-picker]'); if(!p) return;
   p.addEventListener('click', e => {
     const b = e.target.closest('[data-emoji]'); if(!b) return;
     p.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on');
-    form.emoji.value = b.dataset.emoji;
+    form.emoji.value = b.dataset.emoji; onPick && onPick();
+  });
+}
+function setPicker(form, emoji){
+  form.emoji.value = emoji;
+  form.querySelectorAll('[data-emoji]').forEach(b => b.classList.toggle('on', b.dataset.emoji === emoji));
+}
+function catPicker(sel, withAdd=true){
+  return `<label class="f">Kategoria</label><div class="cats" data-catpick>
+    <button type="button" class="${!sel?'on':''}" data-cat="" style="--c:var(--s0)">Bez kategorii</button>
+    ${S.cats.map(c => `<button type="button" class="${sel===c.id?'on':''}" data-cat="${c.id}" style="--c:${catColor(c)}"><span class="dot" style="background:${catColor(c)}"></span>${esc(c.emoji)} ${esc(c.name)}</button>`).join('')}
+    ${withAdd ? `<button type="button" class="add" data-addcat>＋ Nowa</button>` : ''}
+  </div>`;
+}
+function bindCatPicker(root, onPick){
+  const p = root.querySelector('[data-catpick]'); if(!p) return;
+  p.addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]'); if(!b) return;
+    p.querySelectorAll('[data-cat]').forEach(x => x.classList.toggle('on', x === b));
+    onPick(b.dataset.cat || null);
   });
 }
 function formErr(form, msg){ const el = form.querySelector('.err'); if(el) el.textContent = msg; }
@@ -484,13 +736,14 @@ function segSwitch(root){
     root.querySelectorAll('[data-pane]').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== b.dataset.seg));
   }));
 }
+const setAmt = (input, v) => input.value = String(r2(v)).replace('.', ',');
 
 /* --- Pełne środki --- */
 function sheetFull(){
   const T = totals();
   const incs = sorted(S.tx.filter(t => t.type === 'income' || t.type === 'adjust')).slice(0,5);
   openSheet(`${head('💼 Pełne środki')}
-    ${bal('Masz łącznie', T.full, 'Wolne + zaplanowane + oszczędności')}
+    ${bal('Masz łącznie', T.full, 'Wolne + cele + oszczędności (bez gotówki)')}
     <div class="seg"><button class="on" data-seg="add">➕ Dodaj wpływ</button><button data-seg="set">✏️ Ustaw kwotę</button></div>
     <form data-pane="add" id="fAdd">
       <label class="f">Skąd? (opcjonalnie)</label><input class="in" name="name" placeholder="np. Wypłata, Premia, Zwrot" maxlength="40">
@@ -498,14 +751,14 @@ function sheetFull(){
       <div class="err"></div><button class="btn">Dodaj do środków</button>
     </form>
     <form data-pane="set" id="fSet" class="hidden">
-      ${amtField('amount','Ile masz teraz pieniędzy?')}
-      <p style="color:var(--muted);font-size:13px;margin:8px 2px 0">Aplikacja dopisze korektę, żeby saldo zgadzało się z podaną kwotą.</p>
+      ${amtField('amount','Ile masz teraz pieniędzy na koncie?')}
+      <p class="note">Aplikacja dopisze korektę, żeby saldo zgadzało się z podaną kwotą.</p>
       <div class="err"></div><button class="btn">Ustaw kwotę</button>
     </form>
     ${incs.length ? `<div class="list-h">Ostatnie wpływy</div><div class="card">${incs.map(t => txRow(t)).join('')}</div>` : ''}
   `, 'var(--c-full)');
   segSwitch($sh);
-  const fa = $sh.querySelector('#fAdd'), fs = $sh.querySelector('#fSet');
+  const fa = $('#fAdd'), fs = $('#fSet');
   fa.addEventListener('submit', e => { e.preventDefault();
     const a = getAmt(fa); if(a === null) return;
     addTx({ type:'income', amount:a, name: fa.name.value.trim() });
@@ -530,11 +783,10 @@ function sheetFree(){
       ${T.free > 0 ? `<div class="quick">${[10,25,50,100].map(p => `<button type="button" data-p="${p}">${p===100?'Wszystko':p+'%'}</button>`).join('')}</div>` : ''}
       <div class="err"></div><button class="btn">🐷 Przenieś do oszczędności</button>
     </form>
+    ${S.goals.length ? `<button class="btn sec2" data-dep="">🎯 Wpłać na cel</button>` : ''}
   `, 'var(--c-free)');
-  const f = $sh.querySelector('#fSave');
-  f.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => {
-    f.amount.value = String(r2(T.free * b.dataset.p / 100)).replace('.', ',');
-  }));
+  const f = $('#fSave');
+  f.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => setAmt(f.amount, T.free * b.dataset.p / 100)));
   f.addEventListener('submit', e => { e.preventDefault();
     const a = getAmt(f); if(a === null) return;
     if(a > totals().free + 0.001) return formErr(f, 'Masz tylko ' + fmt(totals().free) + ' wolnych środków');
@@ -543,61 +795,158 @@ function sheetFree(){
   });
 }
 
-/* --- Zaplanowane wydatki --- */
-function sheetPlan(){
-  const T = totals();
-  openSheet(`${head('🎯 Zaplanowane wydatki')}
-    ${bal('Zarezerwowane na cele', T.planned)}
+/* --- Cele: nowy --- */
+function sheetNewGoal(){
+  openSheet(`${head('🎯 Nowy cel')}
     <form id="fGoal">
       ${emojiPicker(GOAL_EMOJI)}
-      <label class="f">Cel</label><input class="in" name="name" placeholder="np. Wakacje, Nowy telefon" maxlength="40">
-      ${amtField()}
-      <div class="err"></div><button class="btn">Dodaj cel</button>
-    </form>
-    <div class="list-h">Twoje cele</div>
-    <div class="card">${S.goals.length ? S.goals.map(g => `
-      <div class="row goal-row"><span class="ri" style="--c:var(--c-plan)">${esc(g.emoji)}</span>
-        <span class="rt"><b>${esc(g.name)}</b><small>${fmt(g.amount)} · od ${dShort(g.created)}</small></span>
-        <span class="acts"><button data-done="${g.id}" aria-label="Zrealizuj" title="Zrealizuj">✅</button><button data-del="${g.id}" aria-label="Usuń" title="Usuń">🗑️</button></span>
-      </div>`).join('') : `<div class="empty"><span class="e">🎯</span>Nie masz jeszcze celów.</div>`}
-    </div>
-    ${S.goals.length ? `<p style="color:var(--muted);font-size:12.5px;margin:10px 4px 0">✅ — cel zrealizowany (kwota trafi do wydatków) · 🗑️ — usuń cel (kwota wraca do wolnych)</p>` : ''}
-  `, 'var(--c-plan)');
-  const f = $sh.querySelector('#fGoal'); bindPicker(f);
+      <label class="f">Nazwa celu</label><input class="in" name="name" placeholder="np. Wakacje, Nowy telefon" maxlength="40">
+      ${amtField('target','Ile potrzebujesz?')}
+      ${amtField('first','Wpłać od razu (opcjonalnie)')}
+      <p class="note">Wolne środki: ${fmt(totals().free)}</p>
+      <div class="err"></div><button class="btn">Utwórz cel</button>
+    </form>`, 'var(--c-plan)');
+  const f = $('#fGoal'); bindPicker(f);
   f.addEventListener('submit', e => { e.preventDefault();
     const name = f.name.value.trim(); if(!name){ formErr(f, 'Wpisz nazwę celu'); f.name.focus(); return; }
-    const a = getAmt(f); if(a === null) return;
-    const g = { id: uid(), name, emoji: f.emoji.value, amount: a, created: new Date().toISOString() };
+    const target = getAmt(f, 'target'); if(target === null) return;
+    let first = 0;
+    if(f.first.value.trim()){ first = getAmt(f, 'first', true); if(first === null) return; }
+    if(first > totals().free + 0.001) return formErr(f, 'Masz tylko ' + fmt(totals().free) + ' wolnych środków');
+    const g = { id: uid(), name, emoji: f.emoji.value, target, saved: 0, created: new Date().toISOString() };
     S.goals.push(g);
-    addTx({ type:'goal', action:'add', name, emoji:g.emoji, amount:a });
-    persist(); sheetPlan(); toast('🎯 Dodano cel „' + name + '”' + (totals().free < 0 ? ' — uwaga, brakuje środków' : ''));
+    addTx({ type:'goal', action:'add', goalId:g.id, name, emoji:g.emoji, amount:target });
+    if(first > 0){ g.saved = first; addTx({ type:'goal_dep', goalId:g.id, name, emoji:g.emoji, amount:first }); }
+    closeSheet(); view = 'goals'; persist(); toast('🎯 Dodano cel „' + name + '”');
   });
-  $sh.querySelectorAll('[data-done]').forEach(b => b.addEventListener('click', () => sheetGoalDone(b.dataset.done)));
-  $sh.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
-    const g = S.goals.find(x => x.id === b.dataset.del); if(!g) return;
-    if(!confirm('Usunąć cel „' + g.name + '”? Kwota wróci do wolnych środków.')) return;
+}
+
+/* --- Cele: wpłata --- */
+function sheetDeposit(goalId){
+  if(!S.goals.length){ sheetNewGoal(); return; }
+  let gid = goalId || S.goals[0].id;
+  const T = totals();
+  const draw = () => {
+    const g = S.goals.find(x => x.id === gid);
+    const left = Math.max(0, r2(g.target - g.saved));
+    openSheet(`${head('＋ Wpłata na cel')}
+      ${bal('Wolne środki do wpłaty', T.free)}
+      ${goalId ? '' : `<label class="f">Na który cel?</label><div class="cats" id="gpick">
+        ${S.goals.map(x => `<button type="button" class="${x.id===gid?'on':''}" data-g="${x.id}" style="--c:var(--c-plan)">${esc(x.emoji)} ${esc(x.name)}</button>`).join('')}</div>`}
+      <div class="gcard" style="margin-top:14px;box-shadow:none;border:1.5px solid var(--line)">
+        <div class="gh"><span class="ge">${esc(g.emoji)}</span><span class="gt"><b>${esc(g.name)}</b><small>${fmt(g.saved)} z ${fmt(g.target)}</small></span>
+        <span class="pct" style="color:var(--c-plan)">${Math.floor(pctOf(g.saved,g.target))}%</span></div>
+        <div class="prog"><span style="width:${pctOf(g.saved,g.target)}%"></span></div>
+      </div>
+      <form id="fDep">
+        ${amtField()}
+        <div class="quick">${left > 0 ? `<button type="button" data-q="${left}">Brakująca kwota (${fmt0(Math.ceil(left))})</button>` : ''}
+          ${[50,100,200,500].map(v => `<button type="button" data-q="${v}">${v} zł</button>`).join('')}</div>
+        <div class="err"></div><button class="btn">Wpłać na „${esc(g.name)}”</button>
+      </form>`, 'var(--c-plan)');
+    $sh.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { gid = b.dataset.g; draw(); }));
+    const f = $('#fDep');
+    f.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => setAmt(f.amount, +b.dataset.q)));
+    f.addEventListener('submit', e => { e.preventDefault();
+      const a = getAmt(f); if(a === null) return;
+      if(a > totals().free + 0.001) return formErr(f, 'Masz tylko ' + fmt(totals().free) + ' wolnych środków');
+      if(a > left + 0.001) return formErr(f, left > 0 ? 'Do celu brakuje tylko ' + fmt(left) : 'Ten cel jest już osiągnięty 🎉');
+      g.saved = r2(g.saved + a);
+      addTx({ type:'goal_dep', goalId:g.id, name:g.name, emoji:g.emoji, amount:a });
+      closeSheet(); persist();
+      toast(g.saved >= g.target ? '🎉 Cel „' + g.name + '” osiągnięty!' : '🎯 Wpłacono ' + fmt(a));
+    });
+  };
+  draw();
+}
+
+/* --- Cele: szczegóły --- */
+function sheetGoal(id){
+  const g = S.goals.find(x => x.id === id); if(!g) return;
+  const p = pctOf(g.saved, g.target);
+  const ops = sorted(S.tx.filter(t => t.goalId === g.id && t.type !== 'goal')).slice(0, 8);
+  openSheet(`${head(esc(g.emoji) + ' ' + esc(g.name))}
+    <div class="gcard" style="margin-top:6px">
+      <div class="gh"><span class="gt"><small>Odłożono</small><b style="font-size:24px">${fmt(g.saved)}</b><small>z ${fmt(g.target)}</small></span>
+        <span class="pct" style="font-size:24px;color:${p>=100?'var(--c-free)':'var(--c-plan)'}">${Math.floor(p)}%</span></div>
+      <div class="prog ${p>=100?'done':''}"><span style="width:${p}%"></span></div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <button class="btn" data-dep="${g.id}">＋ Wpłać</button>
+      <button class="btn sec2" id="gWd">↩️ Wycofaj</button>
+      <button class="btn" style="--c:var(--c-free)" id="gDone">✅ Zrealizuj</button>
+      <button class="btn sec2" id="gEdit">✏️ Edytuj</button>
+    </div>
+    <button class="btn ghost" id="gDel">🗑️ Usuń cel</button>
+    ${ops.length ? `<div class="list-h">Wpłaty i wypłaty</div><div class="card">${ops.map(t => txRow(t)).join('')}</div>` : ''}
+    <p class="note">✅ Zrealizuj — kupiłeś to, na co zbierałeś: kwota trafi do wydatków. ↩️ Wycofaj — pieniądze wracają do wolnych środków.</p>
+  `, 'var(--c-plan)');
+  $('#gWd').addEventListener('click', () => sheetGoalWd(g.id));
+  $('#gDone').addEventListener('click', () => sheetGoalDone(g.id));
+  $('#gEdit').addEventListener('click', () => sheetGoalEdit(g.id));
+  $('#gDel').addEventListener('click', () => {
+    if(!confirm('Usunąć cel „' + g.name + '”? Odłożone ' + fmt(g.saved) + ' wróci do wolnych środków.')) return;
     S.goals = S.goals.filter(x => x.id !== g.id);
-    addTx({ type:'goal', action:'del', name:g.name, emoji:g.emoji, amount:g.amount });
-    persist(); sheetPlan(); toast('🗑️ Usunięto cel');
-  }));
+    addTx({ type:'goal', action:'del', goalId:g.id, name:g.name, emoji:g.emoji, amount:g.saved });
+    closeSheet(); persist(); toast('🗑️ Usunięto cel');
+  });
+}
+function sheetGoalWd(id){
+  const g = S.goals.find(x => x.id === id); if(!g) return;
+  openSheet(`${head('↩️ Wycofaj z celu')}
+    ${bal('Odłożone na „' + esc(g.name) + '”', g.saved)}
+    <form id="fGW">${amtField('amount','Ile wycofać do wolnych środków?')}
+      ${g.saved > 0 ? `<div class="quick"><button type="button" data-q="${g.saved}">Wszystko</button></div>` : ''}
+      <div class="err"></div><button class="btn">Wycofaj</button>
+      <button type="button" class="btn sec2" data-back>Wróć</button></form>`, 'var(--c-plan)');
+  const f = $('#fGW');
+  f.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => setAmt(f.amount, +b.dataset.q)));
+  f.querySelector('[data-back]').addEventListener('click', () => sheetGoal(id));
+  f.addEventListener('submit', e => { e.preventDefault();
+    const a = getAmt(f); if(a === null) return;
+    if(a > g.saved + 0.001) return formErr(f, 'Na tym celu jest tylko ' + fmt(g.saved));
+    g.saved = r2(g.saved - a);
+    addTx({ type:'goal_wd', goalId:g.id, name:g.name, emoji:g.emoji, amount:a });
+    closeSheet(); persist(); toast('↩️ Wycofano ' + fmt(a));
+  });
+}
+function sheetGoalEdit(id){
+  const g = S.goals.find(x => x.id === id); if(!g) return;
+  openSheet(`${head('✏️ Edytuj cel')}
+    <form id="fGE">${emojiPicker(GOAL_EMOJI.includes(g.emoji) ? GOAL_EMOJI : [g.emoji, ...GOAL_EMOJI.slice(0,15)], g.emoji)}
+      <label class="f">Nazwa</label><input class="in" name="name" maxlength="40" value="${esc(g.name)}">
+      ${amtField('target','Docelowa kwota')}
+      <div class="err"></div><button class="btn">Zapisz</button>
+      <button type="button" class="btn sec2" data-back>Wróć</button></form>`, 'var(--c-plan)');
+  const f = $('#fGE'); bindPicker(f); setAmt(f.target, g.target);
+  f.querySelector('[data-back]').addEventListener('click', () => sheetGoal(id));
+  f.addEventListener('submit', e => { e.preventDefault();
+    const name = f.name.value.trim(); if(!name) return formErr(f, 'Wpisz nazwę celu');
+    const t = getAmt(f, 'target'); if(t === null) return;
+    Object.assign(g, { name, emoji: f.emoji.value, target: t });
+    persist(); sheetGoal(id); toast('Zapisano zmiany');
+  });
 }
 function sheetGoalDone(id){
   const g = S.goals.find(x => x.id === id); if(!g) return;
+  let cat = null;
   openSheet(`${head('✅ Realizacja celu')}
-    <div class="detail"><div class="e">${esc(g.emoji)}</div><h4>${esc(g.name)}</h4><p>Zaplanowano ${fmt(g.amount)}</p></div>
+    <div class="detail"><div class="e">${esc(g.emoji)}</div><h4>${esc(g.name)}</h4><p>Odłożono ${fmt(g.saved)} z ${fmt(g.target)}</p></div>
     <form id="fDone">
       ${amtField('amount','Ile faktycznie wydałeś?')}
+      ${catPicker(null, false)}
+      <p class="note">Jeśli wydałeś mniej, niż odłożyłeś — reszta wróci do wolnych środków. Jeśli więcej — różnica zostanie pobrana z wolnych.</p>
       <div class="err"></div><button class="btn" style="--c:var(--c-free)">Zrealizowano 🎉</button>
       <button type="button" class="btn sec2" data-back>Wróć</button>
     </form>`, 'var(--c-plan)');
-  const f = $sh.querySelector('#fDone');
-  f.amount.value = String(g.amount).replace('.', ',');
-  f.querySelector('[data-back]').addEventListener('click', sheetPlan);
+  const f = $('#fDone'); setAmt(f.amount, g.saved || g.target);
+  bindCatPicker(f, c => cat = c);
+  f.querySelector('[data-back]').addEventListener('click', () => sheetGoal(id));
   f.addEventListener('submit', e => { e.preventDefault();
     const a = getAmt(f, 'amount', true); if(a === null) return;
     S.goals = S.goals.filter(x => x.id !== g.id);
-    if(a > 0) addTx({ type:'expense', amount:a, name:g.name, emoji:g.emoji, fromGoal:true });
-    addTx({ type:'goal', action:'done', name:g.name, emoji:g.emoji, amount:a });
+    if(a > 0) addTx({ type:'expense', amount:a, name:g.name, emoji:g.emoji, catId:cat, fromGoal:true });
+    addTx({ type:'goal', action:'done', goalId:g.id, name:g.name, emoji:g.emoji, amount:a });
     closeSheet(); persist(); toast('🎉 Cel zrealizowany!');
   });
 }
@@ -605,7 +954,7 @@ function sheetGoalDone(id){
 /* --- Oszczędności --- */
 function sheetSave(){
   const T = totals();
-  const ops = sorted(S.tx.filter(t => CAT.savings.types.includes(t.type))).slice(0,5);
+  const ops = sorted(S.tx.filter(t => CATS_H.savings.includes(t.type))).slice(0,5);
   openSheet(`${head('🐷 Oszczędności')}
     ${bal('Odłożone', T.savings)}
     <div class="seg"><button class="on" data-seg="w">💸 Wykorzystałem</button><button data-seg="u">↩️ Do wolnych</button></div>
@@ -627,32 +976,137 @@ function sheetSave(){
     addTx({ type, amount:a, name: f.name ? f.name.value.trim() : '' });
     closeSheet(); persist(); toast(msg + fmt(a));
   });
-  handle($sh.querySelector('#fW'), 'withdraw', '💸 Wykorzystano ');
-  handle($sh.querySelector('#fU'), 'unsave', '↩️ Przeniesiono ');
+  handle($('#fW'), 'withdraw', '💸 Wykorzystano ');
+  handle($('#fU'), 'unsave', '↩️ Przeniesiono ');
 }
 
 /* --- Wydatki --- */
+let expDraft = null;
 function sheetExp(){
   const T = totals(); const mk = monthKey(new Date());
   const rec = sorted(S.tx.filter(t => t.type === 'expense' && monthKey(new Date(t.date)) === mk)).slice(0,5);
+  const d = expDraft || {}; expDraft = null;
+  let cat = d.cat && catById(d.cat) ? d.cat : null, touched = !!d.touched;
   openSheet(`${head('🧾 Nowy wydatek')}
     ${bal('Wydatki w tym miesiącu', T.expMonth, 'Wolne środki: ' + fmt(T.free))}
     <form id="fExp">
-      ${emojiPicker(EXP_EMOJI)}
-      <label class="f">Nazwa</label><input class="in" name="name" placeholder="np. Zakupy w Biedronce" maxlength="40">
+      ${catPicker(cat)}
+      ${emojiPicker(EXP_EMOJI, d.emoji)}
+      <label class="f">Nazwa</label><input class="in" name="name" placeholder="np. Zakupy w Biedronce" maxlength="40" value="${esc(d.name||'')}">
       ${amtField()}
-      <label class="f">Data</label><input class="in" type="date" name="date" value="${todayInput()}" max="${todayInput()}">
+      <label class="f">Data</label><input class="in" type="date" name="date" value="${d.date || todayInput()}" max="${todayInput()}">
       <div class="err"></div><button class="btn">Dodaj wydatek</button>
     </form>
     ${rec.length ? `<div class="list-h">Ostatnie w tym miesiącu</div><div class="card">${rec.map(t => txRow(t)).join('')}</div>` : ''}
   `, 'var(--c-exp)');
-  const f = $sh.querySelector('#fExp'); bindPicker(f);
+  const f = $('#fExp');
+  if(d.amount) f.amount.value = d.amount;
+  if(cat && !touched) setPicker(f, catById(cat).emoji);
+  bindPicker(f, () => touched = true);
+  bindCatPicker(f, c => { cat = c; if(!touched) setPicker(f, c ? catById(c).emoji : '💸'); });
+  f.querySelector('[data-addcat]').addEventListener('click', () => {
+    expDraft = { cat, touched, emoji: f.emoji.value, name: f.name.value, amount: f.amount.value, date: f.date.value };
+    sheetCats(sheetExp);
+  });
   f.addEventListener('submit', e => { e.preventDefault();
     const name = f.name.value.trim(); if(!name){ formErr(f, 'Wpisz nazwę wydatku'); f.name.focus(); return; }
     const a = getAmt(f); if(a === null) return;
-    S.tx.push({ id: uid(), type:'expense', amount:a, name, emoji:f.emoji.value, date: dateFromInput(f.date.value) });
+    S.tx.push({ id: uid(), type:'expense', amount:a, name, emoji:f.emoji.value, catId:cat, date: dateFromInput(f.date.value) });
     closeSheet(); persist(); toast(f.emoji.value + ' Dodano wydatek ' + fmt(a));
     if(totals().free < 0) setTimeout(() => toast('⚠️ Wolne środki są na minusie'), 1800);
+  });
+}
+
+/* --- Kategorie --- */
+function sheetCats(back){
+  const count = id => S.tx.filter(t => t.type === 'expense' && t.catId === id).length;
+  openSheet(`${head('🏷️ Kategorie')}
+    <div class="card">${S.cats.length ? S.cats.map(c => `
+      <div class="row"><span class="ri" style="--c:${catColor(c)}">${esc(c.emoji)}</span>
+        <span class="rt"><b>${esc(c.name)}</b><small><span class="dot" style="display:inline-block;background:${catColor(c)};vertical-align:0;width:8px;height:8px"></span> ${count(c.id)} ${plural(count(c.id),'wydatek','wydatki','wydatków')}</small></span>
+        <span class="acts"><button data-delcat="${c.id}" aria-label="Usuń kategorię">🗑️</button></span></div>`).join('')
+      : `<div class="empty"><span class="e">🏷️</span>Brak kategorii.</div>`}</div>
+    <div class="list-h">Nowa kategoria</div>
+    <form id="fCat">
+      ${emojiPicker(CAT_EMOJI)}
+      <label class="f">Nazwa</label><input class="in" name="name" placeholder="np. Kosmetyki, Prezenty" maxlength="30">
+      <div class="err"></div><button class="btn">Dodaj kategorię</button>
+      ${back ? `<button type="button" class="btn sec2" data-back>Wróć do wydatku</button>` : ''}
+    </form>
+    <p class="note">Usunięcie kategorii nie usuwa wydatków — trafią do „Bez kategorii”. Kolor każdej kategorii jest stały i taki sam na wykresie.</p>
+  `, 'var(--c-full)');
+  const f = $('#fCat'); bindPicker(f);
+  if(back) f.querySelector('[data-back]').addEventListener('click', back);
+  f.addEventListener('submit', e => { e.preventDefault();
+    const name = f.name.value.trim(); if(!name){ formErr(f, 'Wpisz nazwę kategorii'); f.name.focus(); return; }
+    if(S.cats.some(c => c.name.toLowerCase() === name.toLowerCase())) return formErr(f, 'Taka kategoria już istnieje');
+    const c = { id: uid(), name, emoji: f.emoji.value, slot: freeSlot() };
+    S.cats.push(c); persist(); toast('🏷️ Dodano „' + name + '”');
+    if(back){ if(expDraft){ expDraft.cat = c.id; } back(); } else sheetCats();
+  });
+  $sh.querySelectorAll('[data-delcat]').forEach(b => b.addEventListener('click', () => {
+    const c = catById(b.dataset.delcat); if(!c) return;
+    const n = count(c.id);
+    if(!confirm('Usunąć kategorię „' + c.name + '”?' + (n ? ' ' + n + ' ' + plural(n,'wydatek trafi','wydatki trafią','wydatków trafi') + ' do „Bez kategorii”.' : ''))) return;
+    S.tx.forEach(t => { if(t.catId === c.id) t.catId = null; });
+    S.cats = S.cats.filter(x => x.id !== c.id);
+    persist(); sheetCats(back); toast('Usunięto kategorię');
+  }));
+}
+function sheetCatList(key){
+  const mk = A.month;
+  const list = sorted(S.tx.filter(t => {
+    if(t.type !== 'expense' || !inMonth(t, mk)) return false;
+    const c = catById(t.catId);
+    if(key === 'none') return !c;
+    if(key === 'other') return c && (c.slot === null || c.slot === undefined);
+    return c && c.id === key;
+  }));
+  const c = catById(key);
+  const title = key === 'none' ? '💸 Bez kategorii' : key === 'other' ? '📦 Inne' : esc(c.emoji) + ' ' + esc(c.name);
+  const total = list.reduce((a,t) => a + t.amount, 0);
+  openSheet(`${head(title)}${bal(monthLabel(mk), total, list.length + ' ' + plural(list.length,'wydatek','wydatki','wydatków'))}
+    <div class="card">${list.map(t => txRow(t)).join('') || '<div class="empty">Brak wydatków.</div>'}</div>`, key === 'none' || key === 'other' ? 'var(--s0)' : catColor(c));
+}
+
+/* --- Gotówka --- */
+function sheetCash(){
+  const T = totals();
+  const ops = sorted(S.tx.filter(t => CATS_H.cash.includes(t.type))).slice(0,6);
+  openSheet(`${head('💵 Gotówka')}
+    ${bal('Masz w gotówce', T.cash, 'Nie liczy się do pełnych środków ani statystyk')}
+    <div class="seg"><button class="on" data-seg="out">💸 Wydałem</button><button data-seg="in">➕ Dodaj</button><button data-seg="set">✏️ Ustaw</button></div>
+    <form id="fCO" data-pane="out">
+      <label class="f">Na co? (opcjonalnie)</label><input class="in" name="name" placeholder="np. Lody, Parking" maxlength="40">
+      ${amtField()}<div class="err"></div><button class="btn">Odejmij z gotówki</button>
+    </form>
+    <form id="fCI" data-pane="in" class="hidden">
+      <label class="f">Skąd? (opcjonalnie)</label><input class="in" name="name" placeholder="np. Bankomat, Od babci" maxlength="40">
+      ${amtField()}<div class="err"></div><button class="btn">Dodaj gotówkę</button>
+    </form>
+    <form id="fCS" data-pane="set" class="hidden">
+      ${amtField('amount','Ile masz teraz gotówki w portfelu?')}<div class="err"></div><button class="btn">Ustaw kwotę</button>
+    </form>
+    ${ops.length ? `<div class="list-h">Ostatnie operacje</div><div class="card">${ops.map(t => txRow(t)).join('')}</div>` : ''}
+  `, 'var(--c-cash)');
+  segSwitch($sh);
+  const fo = $('#fCO'), fi = $('#fCI'), fs = $('#fCS');
+  fo.addEventListener('submit', e => { e.preventDefault();
+    const a = getAmt(fo); if(a === null) return;
+    addTx({ type:'cash_out', amount:a, name: fo.name.value.trim() });
+    closeSheet(); persist(); toast('💵 Wydano ' + fmt(a) + ' gotówką');
+  });
+  fi.addEventListener('submit', e => { e.preventDefault();
+    const a = getAmt(fi); if(a === null) return;
+    addTx({ type:'cash_in', amount:a, name: fi.name.value.trim() });
+    closeSheet(); persist(); toast('💵 Dodano ' + fmt(a));
+  });
+  fs.addEventListener('submit', e => { e.preventDefault();
+    const a = getAmt(fs, 'amount', true); if(a === null) return;
+    const diff = r2(a - totals().cash);
+    if(diff === 0){ closeSheet(); toast('Kwota już się zgadza 👍'); return; }
+    addTx({ type:'cash_adj', amount:diff });
+    closeSheet(); persist(); toast('💵 Gotówka: ' + fmt(a));
   });
 }
 
@@ -660,14 +1114,23 @@ function sheetExp(){
 function sheetTx(id){
   const t = S.tx.find(x => x.id === id); if(!t) return;
   const m = meta(t);
-  const when = new Intl.DateTimeFormat('pl-PL',{dateStyle:'full',timeStyle:'short'}).format(new Date(t.date));
-  const goalNote = t.type === 'goal' ? '<p style="margin-top:10px;font-size:12.5px">Usunięcie tego wpisu nie zmienia celów ani sald — to tylko notatka w historii.</p>' : '';
+  const when = cap(new Intl.DateTimeFormat('pl-PL',{dateStyle:'full',timeStyle:'short'}).format(new Date(t.date)));
+  const g = t.goalId ? S.goals.find(x => x.id === t.goalId) : null;
+  let note = '';
+  if(t.type === 'goal') note = 'To tylko notatka w historii — usunięcie nie zmienia celów ani sald.';
+  else if(t.type === 'goal_dep') note = g ? 'Usunięcie cofnie tę wpłatę z celu.' : 'Cel już nie istnieje.';
+  else if(t.type === 'goal_wd') note = g ? 'Usunięcie przywróci tę kwotę na cel.' : 'Cel już nie istnieje.';
   openSheet(`${head('Szczegóły')}
     <div class="detail"><div class="e">${esc(m.e)}</div><h4>${esc(m.title)}</h4>
-      <div class="v ra ${m.cls}">${m.amt}</div><p>${esc(m.sub)}</p><p>${when}</p>${goalNote}</div>
+      <div class="v ra ${m.cls}">${m.amt}</div><p>${esc(m.sub)}</p><p>${when}</p>
+      ${note ? `<p style="margin-top:10px;font-size:12.5px">${note}</p>` : ''}</div>
+    ${t.type === 'expense' ? `<div id="txCat">${catPicker(t.catId, false)}</div>` : ''}
     <button class="btn ghost" id="delTx">🗑️ Usuń wpis</button>`, m.c);
-  $sh.querySelector('#delTx').addEventListener('click', () => {
+  if(t.type === 'expense') bindCatPicker($('#txCat'), c => { t.catId = c; persist(); toast('Zmieniono kategorię'); sheetTx(id); });
+  $('#delTx').addEventListener('click', () => {
     if(!confirm('Na pewno usunąć ten wpis? Salda zostaną przeliczone.')) return;
+    if(g && t.type === 'goal_dep') g.saved = Math.max(0, r2(g.saved - t.amount));
+    if(g && t.type === 'goal_wd') g.saved = r2(g.saved + t.amount);
     S.tx = S.tx.filter(x => x.id !== id); closeSheet(); persist(); toast('Usunięto wpis');
   });
 }
@@ -675,48 +1138,61 @@ function sheetTx(id){
 /* --- Ustawienia --- */
 function sheetSettings(){
   openSheet(`${head('⚙️ Ustawienia')}
-    <p style="color:var(--muted);font-size:14px;line-height:1.5;margin:6px 2px 4px">Dane są zapisane tylko na tym urządzeniu, w przeglądarce. Rób czasem kopię zapasową — przyda się przy zmianie telefonu.</p>
+    <button class="btn sec2" data-open="cats">🏷️ Zarządzaj kategoriami</button>
+    <div class="list-h">Kopia zapasowa</div>
+    <p class="note" style="margin-top:0">Dane są zapisane tylko na tym urządzeniu. Rób czasem kopię — przyda się przy zmianie telefonu.</p>
     <button class="btn" id="exp">📤 Eksportuj kopię (plik)</button>
     <button class="btn sec2" id="imp">📥 Wczytaj kopię</button>
     <button class="btn ghost" id="rst">🧨 Wyczyść wszystkie dane</button>`);
-  $sh.querySelector('#exp').addEventListener('click', () => {
+  $('#exp').addEventListener('click', () => {
     const blob = new Blob([JSON.stringify(S, null, 2)], { type:'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = 'budzet-kopia-' + todayInput() + '.json'; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('📤 Zapisano kopię');
   });
-  $sh.querySelector('#imp').addEventListener('click', () => document.getElementById('importFile').click());
-  $sh.querySelector('#rst').addEventListener('click', () => {
+  $('#imp').addEventListener('click', () => document.getElementById('importFile').click());
+  $('#rst').addEventListener('click', () => {
     if(!confirm('Usunąć WSZYSTKIE dane? Tego nie da się cofnąć.')) return;
-    S = { tx: [], goals: [] }; closeSheet(); persist(); toast('Wyczyszczono dane');
+    S = fresh(); closeSheet(); persist(); toast('Wyczyszczono dane');
   });
 }
 document.getElementById('importFile').addEventListener('change', async e => {
   const file = e.target.files[0]; e.target.value = ''; if(!file) return;
   try{
-    const d = JSON.parse(await file.text());
-    if(!Array.isArray(d.tx) || !Array.isArray(d.goals)) throw 0;
+    const d = migrate(JSON.parse(await file.text()));
+    if(!d) throw 0;
     if(!confirm('Zastąpić obecne dane danymi z kopii?')) return;
-    S = { tx: d.tx, goals: d.goals }; closeSheet(); persist(); toast('📥 Wczytano kopię');
+    S = d; closeSheet(); persist(); toast('📥 Wczytano kopię');
   }catch(_){ toast('⚠️ To nie jest poprawny plik kopii'); }
 });
 
-/* ========== ZDARZENIA ========== */
-const OPEN = { full:sheetFull, free:sheetFree, plan:sheetPlan, save:sheetSave, exp:sheetExp, settings:sheetSettings };
+/* =====================================================================
+   ZDARZENIA
+   ===================================================================== */
+const OPEN = { full:sheetFull, free:sheetFree, plan:() => go('goals'), save:sheetSave, exp:sheetExp,
+  settings:sheetSettings, cash:sheetCash, newgoal:sheetNewGoal, cats:() => sheetCats() };
 document.addEventListener('click', e => {
-  const o = e.target.closest('[data-open]'); if(o){ OPEN[o.dataset.open](); return; }
-  if(e.target.closest('[data-close]')){ closeSheet(); return; }
-  const tx = e.target.closest('[data-tx]'); if(tx){ sheetTx(tx.dataset.tx); return; }
-  const g = e.target.closest('[data-goto]'); if(g){ view = g.dataset.goto; render(); scrollTo(0,0); return; }
-  const c = e.target.closest('[data-cat]'); if(c){ H.cat = c.dataset.cat; render(); return; }
-  const m = e.target.closest('[data-m]');
-  if(m){
-    if(m.dataset.m === 'all') H.month = H.month === 'all' ? monthKey(new Date()) : 'all';
-    else H.month = shiftMonth(H.month, +m.dataset.m);
+  const t = e.target;
+  let el;
+  if(el = t.closest('[data-open]')){ OPEN[el.dataset.open](); return; }
+  if(t.closest('[data-close]')){ closeSheet(); return; }
+  if(el = t.closest('[data-dep]')){ sheetDeposit(el.dataset.dep || null); return; }
+  if(el = t.closest('[data-goal]')){ sheetGoal(el.dataset.goal); return; }
+  if(el = t.closest('[data-tx]')){ sheetTx(el.dataset.tx); return; }
+  if(el = t.closest('[data-goto]')){ closeSheet(); go(el.dataset.goto); return; }
+  if(el = t.closest('[data-hcat]')){ H.cat = el.dataset.hcat; render(); return; }
+  if(el = t.closest('[data-catx]')){ sheetCatList(el.dataset.catx); return; }
+  if(el = t.closest('[data-hl]')){ A.hl = A.hl === el.dataset.hl ? null : el.dataset.hl; render(); return; }
+  if(el = t.closest('[data-am]')){ A.month = shiftMonth(A.month, +el.dataset.am); A.hl = null; render(); return; }
+  if(el = t.closest('[data-amk]')){ A.month = el.dataset.amk; A.hl = null; render(); return; }
+  if(el = t.closest('[data-m]')){
+    if(el.dataset.m === 'all') H.month = H.month === 'all' ? monthKey(new Date()) : 'all';
+    else H.month = shiftMonth(H.month, +el.dataset.m);
     render(); return;
   }
+  if(view === 'stats' && A.hl && !t.closest('.donut')){ A.hl = null; render(); }
 });
-document.querySelectorAll('.nav-b').forEach(b => b.addEventListener('click', () => { view = b.dataset.view; render(); scrollTo(0,0); }));
+document.querySelectorAll('.nav-b').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
 document.getElementById('fab').addEventListener('click', sheetExp);
 
 let tt;
