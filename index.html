@@ -454,6 +454,21 @@ function tile(key, c, ic, label, val, sub=''){
     <span class="hint">›</span></button>`;
 }
 const pctOf = (a,b) => b > 0 ? Math.max(0, Math.min(100, a/b*100)) : 0;
+function planTile(T){
+  const n = S.goals.length;
+  const missing = r2(S.goals.reduce((a,g) => a + Math.max(0, g.target - g.saved), 0));
+  const p = pctOf(T.planned, T.target);
+  const sub = !n ? 'brak celów'
+    : missing > 0 ? `brakuje <b style="color:var(--text)">${fmt(missing)}</b>`
+    : '🎉 wszystkie osiągnięte';
+  return `<button class="tile" data-open="plan" style="--c:var(--c-plan)">
+    <span class="ic">🎯</span><span class="lb">Zaplanowane</span>
+    <span class="am">${fmt(T.planned)}</span>
+    ${n ? `<span class="sub">z ${fmt(T.target)} · ${n} ${plural(n,'cel','cele','celów')}</span>
+      <span class="prog ${missing<=0?'done':''}" style="margin-top:-2px;height:6px"><span style="width:${p}%"></span></span>` : ''}
+    <span class="sub">${sub}</span>
+    <span class="hint">›</span></button>`;
+}
 
 /* ---------- PULPIT ---------- */
 function renderDash(){
@@ -480,7 +495,7 @@ function renderDash(){
       <span class="legend"><span><i style="background:#6ee7b7"></i>Wolne</span><span><i style="background:#fcd34d"></i>Cele</span><span><i style="background:#7dd3fc"></i>Oszczędności</span></span>
     </button>
     ${tile('free','var(--c-free)','✨','Wolne środki',T.free,'do wydania')}
-    ${tile('plan','var(--c-plan)','🎯','Zaplanowane',T.planned, S.goals.length ? 'na ' + S.goals.length + ' ' + plural(S.goals.length,'cel','cele','celów') : 'brak celów')}
+    ${planTile(T)}
     ${tile('save','var(--c-save)','🐷','Oszczędności',T.savings,'odłożone')}
     ${tile('exp','var(--c-exp)','🧾','Wydatki',T.expMonth,'w tym miesiącu')}
   </section>

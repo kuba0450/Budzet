@@ -1,6 +1,6 @@
 // Service worker – pozwala aplikacji działać offline.
 // Po zmianach w plikach podbij numer wersji, żeby telefon pobrał nowość.
-const CACHE = 'budzet-v3';
+const CACHE = 'budzet-v4';
 const FILES = ['./', './index.html', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
