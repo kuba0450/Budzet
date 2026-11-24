@@ -59,7 +59,7 @@ input,select{font:inherit;color:inherit}
 .tile .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;
   background:color-mix(in srgb,var(--c) 15%,transparent)}
 .tile .lb{font-size:13px;color:var(--muted);font-weight:600}
-.tile .am{font-size:20px;font-weight:750;letter-spacing:-.02em;margin-top:auto;word-break:break-word}
+.tile .am{font-size:20px;font-weight:750;letter-spacing:-.02em;margin-top:2px;word-break:break-word}
 .tile .sub{font-size:12px;color:var(--muted);margin-top:-6px}
 .tile::after{content:"";position:absolute;right:-24px;top:-24px;width:80px;height:80px;border-radius:50%;
   background:color-mix(in srgb,var(--c) 10%,transparent)}
@@ -489,15 +489,12 @@ function planTile(T){
   const n = S.goals.length;
   const missing = r2(S.goals.reduce((a,g) => a + Math.max(0, g.target - g.saved), 0));
   const p = pctOf(T.goalsSaved, T.target);
-  const sub = !n ? 'brak celów'
-    : missing > 0 ? `brakuje <b style="color:var(--text)">${fmt(missing)}</b>`
-    : '🎉 wszystkie osiągnięte';
   return `<button class="tile" data-open="plan" style="--c:var(--c-plan)">
     <span class="ic">🎯</span><span class="lb">Zaplanowane</span>
     <span class="am">${fmt(T.goalsSaved)}</span>
     ${n ? `<span class="sub">z ${fmt(T.target)} · ${n} ${plural(n,'cel','cele','celów')}</span>
-      <span class="prog ${missing<=0?'done':''}" style="margin-top:-2px;height:6px"><span style="width:${p}%"></span></span>` : ''}
-    <span class="sub">${sub}</span>
+      <span class="prog ${missing<=0?'done':''}" style="margin-top:-2px;height:6px;margin-right:22px"><span style="width:${p}%"></span></span>` : ''}
+    ${n ? '' : '<span class="sub">brak celów</span>'}
     <span class="hint">›</span></button>`;
 }
 
