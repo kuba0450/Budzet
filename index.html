@@ -134,6 +134,26 @@ button.row:active{background:var(--card2)}
 .gcard .gb button{flex:1;padding:11px;border-radius:13px;font-weight:650;font-size:14px;background:var(--card2)}
 .gcard .gb .dep{background:var(--c-plan);color:#fff}
 .gcard.done .ge{background:color-mix(in srgb,var(--c-free) 15%,transparent)}
+.gdash{padding:14px}
+.gstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gstats div{background:var(--card2);border-radius:13px;padding:10px 10px}
+.gstats small{display:block;color:var(--muted);font-size:11.5px;font-weight:600}
+.gstats b{font-size:16px;letter-spacing:-.01em}
+.pin{margin-top:12px;border:1.5px solid var(--line);border-radius:16px;padding:12px;cursor:pointer}
+.pin:active{background:var(--card2)}
+.pin-h{display:flex;align-items:center;gap:10px}
+.pin-h .ge{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:22px;background:color-mix(in srgb,var(--c-plan) 15%,transparent)}
+.pin-h .gt{flex:1;min-width:0}
+.pin-h .gt b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pin-h .gt small{color:var(--muted);font-size:12.5px}
+.pick{padding:8px 11px;border-radius:11px;background:var(--card2);font-weight:650;font-size:13px;color:var(--c-plan);flex:0 0 auto}
+.pin .gi{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px}
+.gdash-empty{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;text-align:left}
+.gdash-empty>span:first-child{font-size:26px}
+.gdash-empty b{display:block;font-size:15px}.gdash-empty small{color:var(--muted);font-size:12.5px}
+.gdash-empty>span:nth-child(2){flex:1}
+.gdash-empty .plus{font-size:22px;color:var(--c-plan);font-weight:700}
+.src{margin-top:14px}
 .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:color-mix(in srgb,var(--c-free) 16%,transparent);color:var(--c-free)}
 
 /* analysis */
@@ -312,16 +332,7 @@ function migrate(d){
     ? { id:g.id, name:g.name, emoji:g.emoji, target:g.amount, saved:g.amount, created:g.created }
     : g);
   if(!Array.isArray(d.cats)) d.cats = fresh().cats;
-  // stan celu = suma faktycznych wpłat minus wycofania (cele ze starej wersji startują od 0)
-  for(const g of d.goals){
-    let s = 0;
-    for(const t of d.tx){
-      if(t.goalId !== g.id) continue;
-      if(t.type === 'goal_dep') s += t.amount;
-      if(t.type === 'goal_wd') s -= t.amount;
-    }
-    g.saved = Math.max(0, Math.round(s*100)/100);
-  }
+  syncGoals(d);
   d.v = 2;
   return d;
 }
@@ -329,7 +340,23 @@ function load(){
   try{ const d = migrate(JSON.parse(localStorage.getItem(KEY))); if(d) return d; }catch(e){}
   return fresh();
 }
+// stan celu = suma faktycznych wpłat minus wycofania, osobno z karty i z gotówki
+function syncGoals(d){
+  d = d || S;
+  for(const g of d.goals){
+    let card = 0, cash = 0;
+    for(const t of d.tx){
+      if(t.goalId !== g.id || (t.type !== 'goal_dep' && t.type !== 'goal_wd')) continue;
+      const v = t.type === 'goal_dep' ? t.amount : -t.amount;
+      if(t.source === 'cash') cash += v; else card += v;
+    }
+    g.card = Math.max(0, Math.round(card*100)/100);
+    g.cash = Math.max(0, Math.round(cash*100)/100);
+    g.saved = Math.round((g.card + g.cash)*100)/100;
+  }
+}
 function persist(){
+  syncGoals();
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }
   catch(e){ toast('⚠️ Nie udało się zapisać danych'); }
   render();
@@ -392,18 +419,22 @@ function totals(){
       case 'unsave': un += t.amount; break;
       case 'cash_in': case 'cash_adj': cash += t.amount; break;
       case 'cash_out': cash -= t.amount; break;
+      case 'goal_dep': if(t.source === 'cash') cash -= t.amount; break;
+      case 'goal_wd':  if(t.source === 'cash') cash += t.amount; break;
     }
   }
   const full = r2(inc - exp - wd);
   const savings = r2(sv - wd - un);
-  const planned = r2(S.goals.reduce((a,g) => a + g.saved, 0));
+  const planned = r2(S.goals.reduce((a,g) => a + g.card, 0));        // z karty – część pełnych środków
+  const plannedCash = r2(S.goals.reduce((a,g) => a + g.cash, 0));    // z gotówki – poza budżetem
   const target = r2(S.goals.reduce((a,g) => a + g.target, 0));
-  return { full, savings, planned, target, free: r2(full - planned - savings), expMonth: r2(expMonth), cash: r2(cash) };
+  return { full, savings, planned, plannedCash, goalsSaved: r2(planned + plannedCash), target, free: r2(full - planned - savings), expMonth: r2(expMonth), cash: r2(cash) };
 }
 
 /* =====================================================================
    OPIS OPERACJI
    ===================================================================== */
+const isCashOp = t => CATS_H.cash.includes(t.type) || ((t.type === 'goal_dep' || t.type === 'goal_wd') && t.source === 'cash');
 const CATS_H = {
   expense: ['expense'], income: ['income','adjust'], savings: ['save','withdraw','unsave'],
   goals: ['goal','goal_dep','goal_wd'], cash: ['cash_in','cash_out','cash_adj'],
@@ -420,8 +451,8 @@ function meta(t){
     case 'save':    return { e:'🐷', c:'var(--c-save)', title:'Odłożono na oszczędności', sub:'Oszczędności', amt:'+'+fmt(t.amount), cls:'save' };
     case 'withdraw':return { e:'💸', c:'var(--c-save)', title: t.name || 'Wykorzystano z oszczędności', sub:'Z oszczędności', amt:'−'+fmt(t.amount), cls:'neg' };
     case 'unsave':  return { e:'↩️', c:'var(--c-save)', title:'Przywrócono do wolnych środków', sub:'Oszczędności', amt:fmt(t.amount), cls:'mut' };
-    case 'goal_dep':return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub:'Wpłata na cel', amt:'+'+fmt(t.amount), cls:'plan' };
-    case 'goal_wd': return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub:'Wycofano z celu', amt:'−'+fmt(t.amount), cls:'mut' };
+    case 'goal_dep':return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub:'Wpłata na cel · ' + (t.source === 'cash' ? '💵 gotówka' : '💳 karta'), amt:'+'+fmt(t.amount), cls:'plan' };
+    case 'goal_wd': return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub: t.source === 'cash' ? 'Zwrot z celu do 💵 gotówki' : 'Zwrot z celu do 💳 wolnych', amt:'−'+fmt(t.amount), cls:'mut' };
     case 'goal':    return { e: t.emoji || '🎯', c:'var(--c-plan)', title: t.name, sub: {add:'Nowy cel', done:'Cel zrealizowany ✓', del:'Cel usunięty'}[t.action] || 'Cel', amt:fmt(t.amount), cls:'mut' };
     case 'cash_in': return { e:'💵', c:'var(--c-cash)', title: t.name || 'Dodano gotówkę', sub:'Gotówka', amt:'+'+fmt(t.amount), cls:'pos' };
     case 'cash_out':return { e: t.emoji || '💵', c:'var(--c-cash)', title: t.name || 'Wydatek gotówką', sub:'Gotówka', amt:'−'+fmt(t.amount), cls:'neg' };
@@ -457,13 +488,13 @@ const pctOf = (a,b) => b > 0 ? Math.max(0, Math.min(100, a/b*100)) : 0;
 function planTile(T){
   const n = S.goals.length;
   const missing = r2(S.goals.reduce((a,g) => a + Math.max(0, g.target - g.saved), 0));
-  const p = pctOf(T.planned, T.target);
+  const p = pctOf(T.goalsSaved, T.target);
   const sub = !n ? 'brak celów'
     : missing > 0 ? `brakuje <b style="color:var(--text)">${fmt(missing)}</b>`
     : '🎉 wszystkie osiągnięte';
   return `<button class="tile" data-open="plan" style="--c:var(--c-plan)">
     <span class="ic">🎯</span><span class="lb">Zaplanowane</span>
-    <span class="am">${fmt(T.planned)}</span>
+    <span class="am">${fmt(T.goalsSaved)}</span>
     ${n ? `<span class="sub">z ${fmt(T.target)} · ${n} ${plural(n,'cel','cele','celów')}</span>
       <span class="prog ${missing<=0?'done':''}" style="margin-top:-2px;height:6px"><span style="width:${p}%"></span></span>` : ''}
     <span class="sub">${sub}</span>
@@ -506,16 +537,7 @@ function renderDash(){
     <span class="v" style="${T.cash<0?'color:var(--c-exp)':''}">${fmt(T.cash)}</span>
   </button>
 
-  ${S.goals.length ? `
-  <section class="sec">
-    <div class="sec-h"><h2>Twoje cele</h2><button data-goto="goals">Wszystkie ›</button></div>
-    <div class="goals-scroll">
-      ${S.goals.map(g => { const p = pctOf(g.saved, g.target); return `
-        <button class="goal-chip" data-goal="${g.id}"><span class="e">${esc(g.emoji)}</span><b>${esc(g.name)}</b>
-        <small>${fmt0(g.saved)} z ${fmt0(g.target)}</small>
-        <div class="prog ${p>=100?'done':''}"><span style="width:${p}%"></span></div></button>`; }).join('')}
-    </div>
-  </section>` : ''}
+  ${goalsDash(T)}
 
   <section class="sec">
     <div class="sec-h"><h2>Ostatnie operacje</h2>${S.tx.length ? '<button data-goto="hist">Historia ›</button>' : ''}</div>
@@ -524,6 +546,39 @@ function renderDash(){
         `<div class="empty"><span class="e">🌱</span>Zacznij od kafelka <b>Pełne środki</b><br>i wpisz kwotę, którą masz.</div>`}
     </div>
   </section>`;
+}
+
+function pinnedGoal(){ return S.goals.find(g => g.id === S.pin) || S.goals[0] || null; }
+function goalsDash(T){
+  const n = S.goals.length;
+  if(!n) return `<section class="sec"><div class="sec-h"><h2>Twoje cele</h2></div>
+    <button class="card gdash-empty" data-open="newgoal"><span>🎯</span><span><b>Nie masz jeszcze celów</b><small>Stuknij, aby dodać pierwszy</small></span><span class="plus">＋</span></button></section>`;
+  const missing = r2(S.goals.reduce((a,g) => a + Math.max(0, g.target - g.saved), 0));
+  const g = pinnedGoal(), p = pctOf(g.saved, g.target), left = Math.max(0, r2(g.target - g.saved));
+  return `<section class="sec">
+    <div class="sec-h"><h2>Twoje cele</h2><button data-goto="goals">Wszystkie ›</button></div>
+    <div class="card gdash">
+      <div class="gstats">
+        <div><small>Liczba celów</small><b>${n}</b></div>
+        <div><small>Potrzeba łącznie</small><b>${fmt0(T.target)}</b></div>
+        <div><small>Brakuje</small><b style="color:${missing>0?'var(--c-plan)':'var(--c-free)'}">${missing>0 ? fmt0(Math.ceil(missing)) : '🎉 0 zł'}</b></div>
+      </div>
+      <div class="pin" data-goal="${g.id}">
+        <div class="pin-h"><span class="ge">${esc(g.emoji)}</span>
+          <span class="gt"><b>${esc(g.name)}</b><small>${fmt(g.saved)} z ${fmt(g.target)}</small></span>
+          ${n > 1 ? `<button class="pick" data-pickgoal>Zmień ▾</button>` : ''}</div>
+        <div class="prog ${p>=100?'done':''}"><span style="width:${p}%"></span></div>
+        <div class="gi"><span>${left > 0 ? 'Do końca brakuje: <b>' + fmt(left) + '</b>' : '<span class="badge">🎉 Cel osiągnięty!</span>'}</span><span>${Math.floor(p)}%</span></div>
+      </div>
+    </div></section>`;
+}
+function sheetPickGoal(){
+  const cur = pinnedGoal();
+  openSheet(`${head('Który cel pokazywać?')}
+    <div class="card">${S.goals.map(g => { const left = Math.max(0, r2(g.target - g.saved)); return `
+      <button class="row" data-setpin="${g.id}"><span class="ri" style="--c:var(--c-plan)">${esc(g.emoji)}</span>
+        <span class="rt"><b>${esc(g.name)}</b><small>${left > 0 ? 'brakuje ' + fmt(left) : '🎉 osiągnięty'} · ${Math.floor(pctOf(g.saved,g.target))}%</small></span>
+        <span class="ra" style="color:var(--c-plan)">${cur && cur.id === g.id ? '✓' : ''}</span></button>`; }).join('')}</div>`, 'var(--c-plan)');
 }
 
 /* ---------- CELE ---------- */
@@ -549,7 +604,7 @@ function goalCard(g){
   const left = r2(g.target - g.saved);
   return `<div class="gcard ${done?'done':''}">
     <div class="gh"><span class="ge">${esc(g.emoji)}</span>
-      <span class="gt"><b>${esc(g.name)}</b><small>${fmt(g.saved)} z ${fmt(g.target)}</small></span>
+      <span class="gt"><b>${esc(g.name)}</b><small>${fmt(g.saved)} z ${fmt(g.target)}${g.cash > 0 ? ' · 💵 ' + fmt0(g.cash) : ''}</small></span>
       <span class="pct" style="color:${done?'var(--c-free)':'var(--c-plan)'}">${Math.floor(p)}%</span></div>
     <div class="prog ${done?'done':''}"><span style="width:${p}%"></span></div>
     <div class="gi"><span>${done ? '<span class="badge">🎉 Cel osiągnięty!</span>' : 'Brakuje: <b>' + fmt(left) + '</b>'}</span><span>od ${dShort(g.created)}</span></div>
@@ -647,7 +702,7 @@ function donut(segs, total){
 /* ---------- HISTORIA ---------- */
 function renderHist(){
   const all = S.tx.filter(t => inMonth(t, H.month));
-  const list = sorted(H.cat === 'all' ? all : all.filter(t => CATS_H[H.cat].includes(t.type)));
+  const list = sorted(H.cat === 'all' ? all : H.cat === 'cash' ? all.filter(isCashOp) : all.filter(t => CATS_H[H.cat].includes(t.type)));
   const sum = types => r2(all.filter(t => types.includes(t.type)).reduce((a,t) => a + t.amount, 0));
   const cur = monthKey(new Date());
 
@@ -663,7 +718,8 @@ function renderHist(){
     summary = sumGrid([['Odłożono', s, 'var(--c-save)'], ['Wykorzystano', w, 'var(--c-exp)'], ['Przywrócono', u, 'var(--s0)'], ['Bilans', r2(s-w-u), 'var(--c-free)']]); }
   else if(H.cat === 'goals'){ const done = r2(all.filter(t => t.type==='goal' && t.action==='done').reduce((a,t)=>a+t.amount,0));
     summary = sumGrid([['Wpłacono', sum(['goal_dep']), 'var(--c-plan)'], ['Wycofano', sum(['goal_wd']), 'var(--s0)'], ['Zrealizowano', done, 'var(--c-free)']]); }
-  else if(H.cat === 'cash') summary = sumGrid([['Dodano gotówki', sum(['cash_in']), 'var(--c-cash)'], ['Wydano gotówką', sum(['cash_out']), 'var(--c-exp)']]);
+  else if(H.cat === 'cash') summary = sumGrid([['Dodano gotówki', sum(['cash_in']), 'var(--c-cash)'], ['Wydano gotówką', sum(['cash_out']), 'var(--c-exp)'],
+    ['Wpłacono na cele', r2(all.filter(t => t.type==='goal_dep' && t.source==='cash').reduce((a,t)=>a+t.amount,0)), 'var(--c-plan)']]);
 
   let days = '', lastDay = '';
   for(const t of list){
@@ -828,34 +884,55 @@ function sheetNewGoal(){
       <label class="f">Nazwa celu</label><input class="in" name="name" placeholder="np. Wakacje, Nowy telefon" maxlength="40">
       ${amtField('target','Ile potrzebujesz?')}
       ${amtField('first','Wpłać od razu (opcjonalnie)')}
-      <p class="note">Wolne środki: ${fmt(totals().free)}</p>
+      ${srcSeg()}
       <div class="err"></div><button class="btn">Utwórz cel</button>
     </form>`, 'var(--c-plan)');
   const f = $('#fGoal'); bindPicker(f);
+  let src = 'card'; bindSrc(f, v => src = v);
   f.addEventListener('submit', e => { e.preventDefault();
     const name = f.name.value.trim(); if(!name){ formErr(f, 'Wpisz nazwę celu'); f.name.focus(); return; }
     const target = getAmt(f, 'target'); if(target === null) return;
     let first = 0;
     if(f.first.value.trim()){ first = getAmt(f, 'first', true); if(first === null) return; }
-    if(first > totals().free + 0.001) return formErr(f, 'Masz tylko ' + fmt(totals().free) + ' wolnych środków');
-    const g = { id: uid(), name, emoji: f.emoji.value, target, saved: 0, created: new Date().toISOString() };
+    if(first > 0){ const er = srcErr(src, first); if(er) return formErr(f, er); }
+    if(first > target + 0.001) return formErr(f, 'Pierwsza wpłata jest większa niż cel');
+    const g = { id: uid(), name, emoji: f.emoji.value, target, created: new Date().toISOString() };
     S.goals.push(g);
     addTx({ type:'goal', action:'add', goalId:g.id, name, emoji:g.emoji, amount:target });
-    if(first > 0){ g.saved = first; addTx({ type:'goal_dep', goalId:g.id, name, emoji:g.emoji, amount:first }); }
+    if(first > 0) addTx({ type:'goal_dep', goalId:g.id, name, emoji:g.emoji, amount:first, source:src });
     closeSheet(); view = 'goals'; persist(); toast('🎯 Dodano cel „' + name + '”');
   });
+}
+
+/* --- źródło pieniędzy: karta / gotówka --- */
+function srcSeg(sel='card'){
+  return `<label class="f">Skąd wziąć pieniądze?</label><div class="seg" data-src style="--c:var(--c-plan)">
+    <button type="button" class="${sel==='card'?'on':''}" data-srcv="card">💳 Karta</button>
+    <button type="button" class="${sel==='cash'?'on':''}" data-srcv="cash">💵 Gotówka</button></div>`;
+}
+function bindSrc(root, on){
+  const box = root.querySelector('[data-src]'); if(!box) return;
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-srcv]'); if(!b) return;
+    box.querySelectorAll('[data-srcv]').forEach(x => x.classList.toggle('on', x === b)); on(b.dataset.srcv);
+  });
+}
+function srcErr(src, a){
+  const T = totals();
+  if(src === 'cash') return a > T.cash + 0.001 ? 'Masz tylko ' + fmt(T.cash) + ' w gotówce' : '';
+  return a > T.free + 0.001 ? 'Masz tylko ' + fmt(T.free) + ' wolnych środków' : '';
 }
 
 /* --- Cele: wpłata --- */
 function sheetDeposit(goalId){
   if(!S.goals.length){ sheetNewGoal(); return; }
-  let gid = goalId || S.goals[0].id;
+  let gid = goalId || S.goals[0].id, src = 'card';
   const T = totals();
   const draw = () => {
     const g = S.goals.find(x => x.id === gid);
     const left = Math.max(0, r2(g.target - g.saved));
     openSheet(`${head('＋ Wpłata na cel')}
-      ${bal('Wolne środki do wpłaty', T.free)}
+      ${srcSeg(src)}
       ${goalId ? '' : `<label class="f">Na który cel?</label><div class="cats" id="gpick">
         ${S.goals.map(x => `<button type="button" class="${x.id===gid?'on':''}" data-g="${x.id}" style="--c:var(--c-plan)">${esc(x.emoji)} ${esc(x.name)}</button>`).join('')}</div>`}
       <div class="gcard" style="margin-top:14px;box-shadow:none;border:1.5px solid var(--line)">
@@ -864,6 +941,7 @@ function sheetDeposit(goalId){
         <div class="prog"><span style="width:${pctOf(g.saved,g.target)}%"></span></div>
       </div>
       <form id="fDep">
+        <p class="note" id="srcInfo"></p>
         ${amtField()}
         <div class="quick">${left > 0 ? `<button type="button" data-q="${left}">Brakująca kwota (${fmt0(Math.ceil(left))})</button>` : ''}
           ${[50,100,200,500].map(v => `<button type="button" data-q="${v}">${v} zł</button>`).join('')}</div>
@@ -871,13 +949,16 @@ function sheetDeposit(goalId){
       </form>`, 'var(--c-plan)');
     $sh.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { gid = b.dataset.g; draw(); }));
     const f = $('#fDep');
+    const info = () => $('#srcInfo').innerHTML = src === 'cash'
+      ? '💵 Zostanie odjęte z gotówki — masz <b>' + fmt(T.cash) + '</b>'
+      : '💳 Zostanie odjęte z wolnych środków — masz <b>' + fmt(T.free) + '</b>';
+    bindSrc($sh, v => { src = v; info(); }); info();
     f.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => setAmt(f.amount, +b.dataset.q)));
     f.addEventListener('submit', e => { e.preventDefault();
       const a = getAmt(f); if(a === null) return;
-      if(a > totals().free + 0.001) return formErr(f, 'Masz tylko ' + fmt(totals().free) + ' wolnych środków');
+      const er = srcErr(src, a); if(er) return formErr(f, er);
       if(a > left + 0.001) return formErr(f, left > 0 ? 'Do celu brakuje tylko ' + fmt(left) : 'Ten cel jest już osiągnięty 🎉');
-      g.saved = r2(g.saved + a);
-      addTx({ type:'goal_dep', goalId:g.id, name:g.name, emoji:g.emoji, amount:a });
+      addTx({ type:'goal_dep', goalId:g.id, name:g.name, emoji:g.emoji, amount:a, source:src });
       closeSheet(); persist();
       toast(g.saved >= g.target ? '🎉 Cel „' + g.name + '” osiągnięty!' : '🎯 Wpłacono ' + fmt(a));
     });
@@ -895,6 +976,7 @@ function sheetGoal(id){
       <div class="gh"><span class="gt"><small>Odłożono</small><b style="font-size:24px">${fmt(g.saved)}</b><small>z ${fmt(g.target)}</small></span>
         <span class="pct" style="font-size:24px;color:${p>=100?'var(--c-free)':'var(--c-plan)'}">${Math.floor(p)}%</span></div>
       <div class="prog ${p>=100?'done':''}"><span style="width:${p}%"></span></div>
+      <div class="gi"><span>💳 Z karty: <b>${fmt(g.card)}</b></span><span>💵 Z gotówki: <b>${fmt(g.cash)}</b></span></div>
     </div>
     <div class="grid2" style="margin-top:14px">
       <button class="btn" data-dep="${g.id}">＋ Wpłać</button>
@@ -904,13 +986,15 @@ function sheetGoal(id){
     </div>
     <button class="btn ghost" id="gDel">🗑️ Usuń cel</button>
     ${ops.length ? `<div class="list-h">Wpłaty i wypłaty</div><div class="card">${ops.map(t => txRow(t)).join('')}</div>` : ''}
-    <p class="note">✅ Zrealizuj — kupiłeś to, na co zbierałeś: kwota trafi do wydatków. ↩️ Wycofaj — pieniądze wracają do wolnych środków.</p>
+    <p class="note">✅ Zrealizuj — kupiłeś to, na co zbierałeś: kwota trafi do wydatków. ↩️ Wycofaj — pieniądze wracają do wolnych środków albo do gotówki.</p>
   `, 'var(--c-plan)');
   $('#gWd').addEventListener('click', () => sheetGoalWd(g.id));
   $('#gDone').addEventListener('click', () => sheetGoalDone(g.id));
   $('#gEdit').addEventListener('click', () => sheetGoalEdit(g.id));
   $('#gDel').addEventListener('click', () => {
-    if(!confirm('Usunąć cel „' + g.name + '”? Odłożone ' + fmt(g.saved) + ' wróci do wolnych środków.')) return;
+    if(!confirm('Usunąć cel „' + g.name + '”? Odłożone pieniądze wrócą tam, skąd przyszły'
+      + (g.saved > 0 ? ' (💳 ' + fmt(g.card) + ' do wolnych, 💵 ' + fmt(g.cash) + ' do gotówki).' : '.'))) return;
+    if(g.cash > 0) addTx({ type:'goal_wd', goalId:g.id, name:g.name, emoji:g.emoji, amount:g.cash, source:'cash' });
     S.goals = S.goals.filter(x => x.id !== g.id);
     addTx({ type:'goal', action:'del', goalId:g.id, name:g.name, emoji:g.emoji, amount:g.saved });
     closeSheet(); persist(); toast('🗑️ Usunięto cel');
@@ -920,18 +1004,24 @@ function sheetGoalWd(id){
   const g = S.goals.find(x => x.id === id); if(!g) return;
   openSheet(`${head('↩️ Wycofaj z celu')}
     ${bal('Odłożone na „' + esc(g.name) + '”', g.saved)}
-    <form id="fGW">${amtField('amount','Ile wycofać do wolnych środków?')}
-      ${g.saved > 0 ? `<div class="quick"><button type="button" data-q="${g.saved}">Wszystko</button></div>` : ''}
+    <form id="fGW">
+      <label class="f">Dokąd zwrócić?</label><div class="seg" data-src style="--c:var(--c-plan)">
+        <button type="button" class="${g.card>0||g.cash<=0?'on':''}" data-srcv="card">💳 Do wolnych (${fmt0(g.card)})</button>
+        <button type="button" class="${g.card<=0&&g.cash>0?'on':''}" data-srcv="cash">💵 Do gotówki (${fmt0(g.cash)})</button></div>
+      ${amtField('amount','Ile wycofać?')}
+      <div class="quick"><button type="button" data-all>Wszystko</button></div>
       <div class="err"></div><button class="btn">Wycofaj</button>
       <button type="button" class="btn sec2" data-back>Wróć</button></form>`, 'var(--c-plan)');
   const f = $('#fGW');
-  f.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => setAmt(f.amount, +b.dataset.q)));
+  let src = g.card > 0 || g.cash <= 0 ? 'card' : 'cash';
+  bindSrc(f, v => src = v);
+  f.querySelector('[data-all]').addEventListener('click', () => setAmt(f.amount, src === 'cash' ? g.cash : g.card));
   f.querySelector('[data-back]').addEventListener('click', () => sheetGoal(id));
   f.addEventListener('submit', e => { e.preventDefault();
     const a = getAmt(f); if(a === null) return;
-    if(a > g.saved + 0.001) return formErr(f, 'Na tym celu jest tylko ' + fmt(g.saved));
-    g.saved = r2(g.saved - a);
-    addTx({ type:'goal_wd', goalId:g.id, name:g.name, emoji:g.emoji, amount:a });
+    const max = src === 'cash' ? g.cash : g.card;
+    if(a > max + 0.001) return formErr(f, src === 'cash' ? 'Z gotówki odłożono tu tylko ' + fmt(max) : 'Z karty odłożono tu tylko ' + fmt(max));
+    addTx({ type:'goal_wd', goalId:g.id, name:g.name, emoji:g.emoji, amount:a, source:src });
     closeSheet(); persist(); toast('↩️ Wycofano ' + fmt(a));
   });
 }
@@ -960,7 +1050,7 @@ function sheetGoalDone(id){
     <form id="fDone">
       ${amtField('amount','Ile faktycznie wydałeś?')}
       ${catPicker(null, false)}
-      <p class="note">Jeśli wydałeś mniej, niż odłożyłeś — reszta wróci do wolnych środków. Jeśli więcej — różnica zostanie pobrana z wolnych.</p>
+      <p class="note">${g.cash > 0 ? 'Najpierw zostanie wykorzystana odłożona gotówka (' + fmt(g.cash) + '), potem środki z karty — tylko ta część trafi do wydatków i statystyk. ' : ''}Jeśli wydałeś mniej, niż odłożyłeś — reszta wróci tam, skąd przyszła. Jeśli więcej — różnica zostanie pobrana z wolnych środków.</p>
       <div class="err"></div><button class="btn" style="--c:var(--c-free)">Zrealizowano 🎉</button>
       <button type="button" class="btn sec2" data-back>Wróć</button>
     </form>`, 'var(--c-plan)');
@@ -969,8 +1059,10 @@ function sheetGoalDone(id){
   f.querySelector('[data-back]').addEventListener('click', () => sheetGoal(id));
   f.addEventListener('submit', e => { e.preventDefault();
     const a = getAmt(f, 'amount', true); if(a === null) return;
+    const cashUsed = Math.min(a, g.cash), cardPart = r2(a - cashUsed), cashLeft = r2(g.cash - cashUsed);
+    if(cashLeft > 0) addTx({ type:'goal_wd', goalId:g.id, name:g.name, emoji:g.emoji, amount:cashLeft, source:'cash' });
     S.goals = S.goals.filter(x => x.id !== g.id);
-    if(a > 0) addTx({ type:'expense', amount:a, name:g.name, emoji:g.emoji, catId:cat, fromGoal:true });
+    if(cardPart > 0) addTx({ type:'expense', amount:cardPart, name:g.name, emoji:g.emoji, catId:cat, fromGoal:true });
     addTx({ type:'goal', action:'done', goalId:g.id, name:g.name, emoji:g.emoji, amount:a });
     closeSheet(); persist(); toast('🎉 Cel zrealizowany!');
   });
@@ -1097,9 +1189,9 @@ function sheetCatList(key){
 /* --- Gotówka --- */
 function sheetCash(){
   const T = totals();
-  const ops = sorted(S.tx.filter(t => CATS_H.cash.includes(t.type))).slice(0,6);
+  const ops = sorted(S.tx.filter(isCashOp)).slice(0,6);
   openSheet(`${head('💵 Gotówka')}
-    ${bal('Masz w gotówce', T.cash, 'Nie liczy się do pełnych środków ani statystyk')}
+    ${bal('Masz w gotówce', T.cash, 'Nie liczy się do pełnych środków ani statystyk' + (T.plannedCash > 0 ? ' · na celach: ' + fmt(T.plannedCash) : ''))}
     <div class="seg"><button class="on" data-seg="out">💸 Wydałem</button><button data-seg="in">➕ Dodaj</button><button data-seg="set">✏️ Ustaw</button></div>
     <form id="fCO" data-pane="out">
       <label class="f">Na co? (opcjonalnie)</label><input class="in" name="name" placeholder="np. Lody, Parking" maxlength="40">
@@ -1154,8 +1246,6 @@ function sheetTx(id){
   if(t.type === 'expense') bindCatPicker($('#txCat'), c => { t.catId = c; persist(); toast('Zmieniono kategorię'); sheetTx(id); });
   $('#delTx').addEventListener('click', () => {
     if(!confirm('Na pewno usunąć ten wpis? Salda zostaną przeliczone.')) return;
-    if(g && t.type === 'goal_dep') g.saved = Math.max(0, r2(g.saved - t.amount));
-    if(g && t.type === 'goal_wd') g.saved = r2(g.saved + t.amount);
     S.tx = S.tx.filter(x => x.id !== id); closeSheet(); persist(); toast('Usunięto wpis');
   });
 }
@@ -1201,6 +1291,8 @@ document.addEventListener('click', e => {
   let el;
   if(el = t.closest('[data-open]')){ OPEN[el.dataset.open](); return; }
   if(t.closest('[data-close]')){ closeSheet(); return; }
+  if(t.closest('[data-pickgoal]')){ sheetPickGoal(); return; }
+  if(el = t.closest('[data-setpin]')){ S.pin = el.dataset.setpin; closeSheet(); persist(); return; }
   if(el = t.closest('[data-dep]')){ sheetDeposit(el.dataset.dep || null); return; }
   if(el = t.closest('[data-goal]')){ sheetGoal(el.dataset.goal); return; }
   if(el = t.closest('[data-tx]')){ sheetTx(el.dataset.tx); return; }
