@@ -312,6 +312,16 @@ function migrate(d){
     ? { id:g.id, name:g.name, emoji:g.emoji, target:g.amount, saved:g.amount, created:g.created }
     : g);
   if(!Array.isArray(d.cats)) d.cats = fresh().cats;
+  // stan celu = suma faktycznych wpłat minus wycofania (cele ze starej wersji startują od 0)
+  for(const g of d.goals){
+    let s = 0;
+    for(const t of d.tx){
+      if(t.goalId !== g.id) continue;
+      if(t.type === 'goal_dep') s += t.amount;
+      if(t.type === 'goal_wd') s -= t.amount;
+    }
+    g.saved = Math.max(0, Math.round(s*100)/100);
+  }
   d.v = 2;
   return d;
 }
